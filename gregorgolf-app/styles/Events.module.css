@@ -1,0 +1,28 @@
+.eventsDate {
+    text-align: center;
+    position: absolute;
+    right: 30px;
+    top: 30px;
+    background-color: var(--mantine-color-blue-filled);
+    color: #fff;
+    padding: 12px 20px 8px 20px;
+    text-transform: uppercase
+}
+
+.eventDateDay {
+    font-size: 28px;
+}
+
+.eventDateMonth {
+    font-size: 14px;
+}
+
+.icon {
+    color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
+  }
+  
+.name {
+    font-family:
+        Greycliff CF,
+        var(--mantine-font-family);
+}
