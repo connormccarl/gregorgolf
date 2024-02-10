@@ -20,7 +20,7 @@ config.autoAddCss = false;
 const theme = createTheme({
   primaryColor: 'dark-green',
   colors: {
-    'dark-green': ["#f4f6f4","#e8e9e8","#cdd2cf","#afbab2","#96a49b","#86988b","#7c9283","#697e70","#5c7062","#4c6253"],
+    'dark-green': ["#f4f6f4","#e8e9e8","#cdd2cf","#afbab2","#96a49b","#86988b","#7c9283","#697e70","#5c7062","#1F2822"],
     'light-green': ["#effce9","#e1f4d9","#c4e5b4","#a4d78c","#8acb6b","#79c355","#6fbf49","#5da83a","#509530","#428124"]
   }
 })
