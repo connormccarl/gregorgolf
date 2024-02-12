@@ -1,0 +1,17 @@
+.login {
+    min-height: 100vh;
+    @media (max-width: $mantine-breakpoint-sm){
+        order: 2;
+        padding-bottom: 30px;
+    }
+}
+
+.logo {
+    background-color: var(--mantine-color-dark-green-9);
+    height:100%;
+
+    @media (max-width: $mantine-breakpoint-sm){
+        order: 1;
+        height: 60vh
+    }
+}

@@ -12,6 +12,7 @@ export const usersRepo = {
     getById,
     create,
     update,
+    updatePassword,
     delete: _delete
 };
 
@@ -66,6 +67,23 @@ async function update(id, params) {
     }
 
     // hash password if it was entered
+    if (params.password) {
+        params.hash = bcrypt.hashSync(params.password, 10);
+    }
+
+    // copy params properties to user
+    Object.assign(user, params);
+
+    await user.save();
+}
+
+async function updatePassword(email, params) {
+    const user = await User.findOne({ email: email });
+
+    // validate
+    if(!user) throw 'Email not found';
+
+    // hash password
     if (params.password) {
         params.hash = bcrypt.hashSync(params.password, 10);
     }

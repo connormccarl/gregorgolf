@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Center, Group, Stack, Burger, Button, Box, Drawer, ScrollArea, Divider, rem } from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { AppShell, Group, Stack, Burger, Text, ScrollArea } from '@mantine/core';
 import {
   IconCalendarEvent,
   IconUserCog,
@@ -11,23 +11,24 @@ import {
 import { Logo } from './Logo';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/router';
+import { userService } from 'services';
+import { Alert } from './Alert'
 
 import classes from './Layout.module.css';
 
 const data = [
   { link: '#', label: 'Dashboard', role: 'user' },
-  { link: '', label: 'Booking Calendar', icon: IconGolf, role: 'user' },
-  { link: '', label: 'My Bookings', icon: IconCalendarEvent, role: 'user' },
+  { link: '/', label: 'Booking Calendar', icon: IconGolf, role: 'user' },
+  { link: '/bookings', label: 'My Bookings', icon: IconCalendarEvent, role: 'user' },
   { link: '#', label: 'Admin', role: 'admin'},
-  { link: '', label: 'Manage Bookings', icon: IconListDetails, role: 'admin' },
-  { link: '', label: 'Manage Members', icon: IconUsers, role: 'admin' },
+  { link: '/admin/bookings', label: 'Manage Bookings', icon: IconListDetails, role: 'admin' },
+  { link: '/admin/members', label: 'Manage Members', icon: IconUsers, role: 'admin' },
 ];
 
-export function Layout() {
-  const [active, setActive] = useState('Booking Calendar');
+export function Layout({children}) {
   const router = useRouter()
-  const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] = useDisclosure(false);
-    
+  const [active, setActive] = useState(router.pathname);
+  const [opened, { toggle, close }] = useDisclosure();
 
   const links = data.map((item) => item.link === '#' ? 
     (
@@ -37,12 +38,12 @@ export function Layout() {
     (
       <a
         className={classes.link}
-        data-active={item.label === active || undefined}
+        data-active={item.link === active || undefined}
         href={item.link}
         key={item.label}
         onClick={(event) => {
           event.preventDefault();
-          setActive(item.label);
+          setActive(item.link);
         }}
       >
         <item.icon className={classes.linkIcon} stroke={1.5} />
@@ -51,52 +52,60 @@ export function Layout() {
     ));
 
   return (
-    <nav className={classes.navbar}>
-      <div className={classes.navbarMain}>
-        <Center className={classes.header}>
-          <Logo style={{width: rem(220)}} />
-        </Center>
-      </div>
-      <ScrollArea visibleFrom='sm'>
-        {links}
-        <Stack className={classes.footer} visibleFrom='sm' gap="0">
-          <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-            <IconUserCog className={classes.linkIcon} stroke={1.5} />
-            <span>Edit Profile</span>
-          </a>
-
-          <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-            <IconLogout className={classes.linkIcon} stroke={1.5} />
-            <span>Logout</span>
-          </a>
-        </Stack>
-      </ScrollArea>
-
-      <Burger opened={drawerOpened} onClick={toggleDrawer} hiddenFrom="sm" />
-      <Drawer
-            opened={drawerOpened}
-            onClose={closeDrawer}
-            size="100%"
-            padding="md"
-            title="Navigation"
+    <AppShell
+      header={{ height: 80 }}
+      navbar={{
+        width: 300,
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened },
+      }}
+      padding="md"
+      classNames={{
+        navbar: classes.navbar,
+        header: classes.header
+      }}
+    >
+      <AppShell.Header>
+        <Group justify='space-between'>
+          <Burger
+            opened={opened}
+            onClick={toggle}
             hiddenFrom="sm"
-            zIndex={1000000}
-        >
-          <ScrollArea h={`calc(100vh - ${rem(80)})`} mx="-md">
-            {links}
-            <Stack className={classes.footer} visibleFrom='sm' gap="0">
-              <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-                <IconUserCog className={classes.linkIcon} stroke={1.5} />
-                <span>Edit Profile</span>
-              </a>
+            size="sm"
+            color='white'
+            className='ms-2'
+          />
+          <Logo className={classes.logo} />
+          <Text span c='white' className='me-3'>
+            Call <Text span fs='italic' c='var(--mantine-color-light-green-5)'>(248) 690-7370</Text>
+          </Text>
+        </Group>
+      </AppShell.Header>
 
-              <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-                <IconLogout className={classes.linkIcon} stroke={1.5} />
-                <span>Logout</span>
-              </a>
-            </Stack>
-          </ScrollArea>
-      </Drawer>
-    </nav>
+      <AppShell.Navbar p="md">
+        <AppShell.Section grow component={ScrollArea}>
+          {links}
+        </AppShell.Section>
+        <AppShell.Section>
+          <Stack className={classes.footer} gap="0">
+            <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
+              <IconUserCog className={classes.linkIcon} stroke={1.5} />
+              <span>Edit Profile</span>
+            </a>
+
+            <a href="#" className={classes.link} onClick={userService.logout}>
+              <IconLogout className={classes.linkIcon} stroke={1.5} />
+              <span>Logout</span>
+            </a>
+          </Stack>
+        </AppShell.Section>
+
+      </AppShell.Navbar>
+
+      <AppShell.Main>
+        <Alert />
+        {children}
+      </AppShell.Main>
+    </AppShell>
   );
 }

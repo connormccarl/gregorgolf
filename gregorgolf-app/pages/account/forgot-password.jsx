@@ -4,22 +4,24 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 
-import { SimpleGrid, Center, Image, Container, Title } from '@mantine/core';
 import { Layout } from 'components/account';
 import { userService, alertService } from 'services';
-import { Alert } from '@/components';
 
-import classes from './Login.module.css';
+export default Register;
 
-export default Login;
-
-function Login() {
+function Register() {
     const router = useRouter();
 
     // form validation rules 
     const validationSchema = Yup.object().shape({
-        email: Yup.string().required('Email is required'),
-        password: Yup.string().required('Password is required')
+        email: Yup.string()
+            .required('Email is required'),
+        password: Yup.string()
+            .required('Password is required')
+            .min(6, 'Password must be at least 6 characters'),
+        confirmPassword: Yup.string()
+            .required('Confirm Password is required')
+            .oneOf([Yup.ref('password'), null], 'Passwords must match')
     });
     const formOptions = { resolver: yupResolver(validationSchema) };
 
@@ -27,25 +29,22 @@ function Login() {
     const { register, handleSubmit, formState } = useForm(formOptions);
     const { errors } = formState;
 
-    function onSubmit({ email, password }) {
+    async function onSubmit(user) {
         alertService.clear();
-        return userService.login(email, password)
-            .then(() => {
-                // get return url from query parameters or default to '/'
-                const returnUrl = router.query.returnUrl || '/';
-                router.push(returnUrl);
-            })
-            .catch(alertService.error);
+
+        return userService.updatePassword(user.email, user)
+           .then(() => {
+               router.push('/account/login');
+               alertService.success('Password Updated Successfully', true);
+           })
+           .catch(alertService.error)
     }
 
     return (
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <Center className={classes.login}>
-                <Container w="90%">
-                    <Title size="h1">Welcome to Gregor Golf</Title>
-                    <Title size="h4" c="dimmed">Gregor Private Club of Golf, please login below.</Title>
-                    <Alert />
-                    <br />
+        <Layout>
+            <div className="card">
+                <h4 className="card-header">Reset Your Password</h4>
+                <div className="card-body">
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="mb-3">
                             <label className="form-label">Email</label>
@@ -53,25 +52,23 @@ function Login() {
                             <div className="invalid-feedback">{errors.email?.message}</div>
                         </div>
                         <div className="mb-3">
-                            <label className="form-label">Password</label>
+                            <label className="form-label">New Password</label>
                             <input name="password" type="password" {...register('password')} className={`form-control ${errors.password ? 'is-invalid' : ''}`} />
                             <div className="invalid-feedback">{errors.password?.message}</div>
                         </div>
+                        <div className="mb-3">
+                            <label className="form-label">Confirm New Password</label>
+                            <input name="password" type="password" {...register('confirmPassword')} className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`} />
+                            <div className="invalid-feedback">{errors.confirmPassword?.message}</div>
+                        </div>
                         <button disabled={formState.isSubmitting} className="btn btn-primary">
                             {formState.isSubmitting && <span className="spinner-border spinner-border-sm me-1"></span>}
-                            Login
+                            Reset Password
                         </button>
-                        <Link href="/account/register" className="btn btn-link">Register</Link>
-                        <Link href="/account/forgot-password" className="btn btn-link">Forgot Password</Link>
+                        <Link href="/account/login" className="btn btn-link">Cancel</Link>
                     </form>
-                </Container>
-            </Center>
-            <Center className={classes.logo}>
-                <Image 
-                    h={300}
-                    src="/full_logo_white.webp"
-                />
-            </Center>
-        </SimpleGrid>
+                </div>
+            </div>
+        </Layout>
     );
 }

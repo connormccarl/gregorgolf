@@ -18,6 +18,7 @@ export const userService = {
     getAll,
     getById,
     update,
+    updatePassword,
     delete: _delete
 };
 
@@ -47,6 +48,10 @@ async function getAll() {
 
 async function getById(id) {
     return await fetchWrapper.get(`${baseUrl}/${id}`);
+}
+
+async function updatePassword(email, params) {
+    return await fetchWrapper.put(`${baseUrl}/password/${email}`, params);
 }
 
 async function update(id, params) {
