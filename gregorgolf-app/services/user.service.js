@@ -22,6 +22,7 @@ export const userService = {
     getByEmail,
     sendPasswordReset,
     addPhoto,
+    removePhoto,
     delete: _delete
 };
 
@@ -84,9 +85,33 @@ async function addPhoto(file, id) {
     formData.append("image", file);
     formData.append("id", id);
 
-    console.log("in user service");
+    const photoPath = await fetchWrapper.post(`${baseUrl}/photo/add`, formData);
+    
+    // update stored user if the logged in user updated their own record
+    if (userSubject.value && id === userSubject.value.id) {
+        // update local storage
+        const user = { ...userSubject.value, photo: photoPath };
+        localStorage.setItem('user', JSON.stringify(user));
 
-    return await fetchWrapper.post(`${baseUrl}/photo`, formData);
+        // publish updated user to subscribers
+        userSubject.next(user);
+    }
+
+    return photoPath;
+}
+
+async function removePhoto(image, id) {
+    await fetchWrapper.put(`${baseUrl}/photo/remove`, { id, image });
+
+    // update stored user if the logged in user updated their own record
+    if (userSubject.value && id === userSubject.value.id) {
+        // update local storage
+        const user = { ...userSubject.value, photo: undefined };
+        localStorage.setItem('user', JSON.stringify(user));
+
+        // publish updated user to subscribers
+        userSubject.next(user);
+    }
 }
 
 // prefixed with underscored because delete is a reserved word in javascript

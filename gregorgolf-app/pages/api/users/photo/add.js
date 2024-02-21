@@ -5,8 +5,7 @@ import path from 'path';
 import fs from "fs/promises";
 
 export default apiHandler({
-    post: addPhoto,
-    delete: _delete
+    post: addPhoto
 });
 
 export const config = {
@@ -19,10 +18,10 @@ const saveFile = async (req) => {
     const options = {};
     options.uploadDir = path.join(process.cwd(), "/public/images");
     options.filename = (name, ext, path, form) => {
-        return Date.now().toString() + "_" + path.originalFilename;
+        return Date.now().toString() + "_" + path.originalFilename.replace(" ", "_");
     };
     options.maxFileSize = 4000 * 1024 * 1024;
-    const form = formidable({ multiples: true });
+    const form = formidable(options);
     return new Promise((resolve, reject) => {
         form.parse(req, async (err, fields, files) => {
             if(err) {
@@ -41,22 +40,15 @@ async function addPhoto(req, res) {
     }
 
     const {fields, files} = await saveFile(req);
+    
+    const id = fields.id[0];
+    const filePath = files.image[0].filepath;
+    const fileLoc = filePath.substring(filePath.indexOf("\\images"));
+    const publicPath = "http://localhost:3001" + fileLoc.replaceAll("\\","/");
 
-    console.log("fields: ", fields);
-    console.log("files: ", files);
+    //console.log("file: ", publicPath);
 
-    //const filePath = files.upload.filepath;
-    //const id = fields.id[0];
-
-    //console.log("file: ", filePath);
-    //console.log("id: ", id);
     // update user
-
-    //await usersRepo.updatePhoto(id, filePath);
-    //return res.status(200).json({ filePath });
-}
-
-async function _delete(req, res) {
-    await usersRepo.delete(req.query.id);
-    return res.status(200).json({});
+    await usersRepo.updatePhoto(id, publicPath);
+    return res.status(200).json(publicPath);
 }

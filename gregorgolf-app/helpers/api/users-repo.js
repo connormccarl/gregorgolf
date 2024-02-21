@@ -87,14 +87,14 @@ async function update(id, params) {
     await user.save();
 }
 
-async function updatePhoto(id, params) {
+async function updatePhoto(id, photoPath) {
     const user = await User.findById(id);
 
     // validate
     if (!user) throw 'User not found';
 
-    // copy params properties to user
-    Object.assign(user, params);
+    // add photo to user
+    Object.assign(user, { photo: photoPath });
 
     await user.save();
 }

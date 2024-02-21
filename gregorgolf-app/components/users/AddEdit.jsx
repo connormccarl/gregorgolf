@@ -13,8 +13,7 @@ export { AddEdit };
 function AddEdit(props) {
     const user = props?.user;
     const router = useRouter();
-    const [file, setFile] = useState(null);
-    const [image, setImage] = useState(props?.user.image);
+    const [image, setImage] = useState(props?.user.photo);
 
     // form validation rules 
     const validationSchema = Yup.object().shape({
@@ -55,32 +54,34 @@ function AddEdit(props) {
             }
 
             // redirect to user list with success message
-            router.push('/users');
-            alertService.success(message, true);
+            alertService.success(message);
         } catch (error) {
             alertService.error(error);
-            console.error(error);
         }
     }
 
     // handle file upload
     const hiddenFileInput = useRef(null);
     const handleUpload = async (event) => {
-        console.log("here");
-
         if(event.target.files){
             const file = event.target.files[0];
 
             try{
                 if(!file) return;
-
-                const returnObj = await userService.addPhoto(file, user.id);
-                console.log("api return:", returnObj);
+                setImage(await userService.addPhoto(file, user.id));
             } catch (error) {
-                console.log(error);
                 alertService.error(error);
             }
         }
+    }
+
+    const removePhoto = async () => {
+        await userService.removePhoto(image, user.id);
+        setImage(undefined);
+    }
+
+    const changePhoto = async (event) => {
+
     }
 
     return (
@@ -104,10 +105,11 @@ function AddEdit(props) {
                         </div>
                     ) : (
                         <div>
-                            <button type="button" className="btn btn-secondary me-2">
+                            <button type="button" onClick={removePhoto} className="btn btn-secondary me-2">
                                 Remove Photo
                             </button>
-                            <button type="button" className="btn btn-primary">
+                            <input type="file" onChange={changePhoto} ref={hiddenFileInput} style={{ display: 'none' }} />
+                            <button type="button" className="btn btn-primary" onClick={() => hiddenFileInput.current.click()} >
                                 Change Photo
                             </button>
                         </div>

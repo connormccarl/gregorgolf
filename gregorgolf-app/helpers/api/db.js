@@ -20,7 +20,8 @@ function userModel() {
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         job: { type: String },
-        phone: { type: String }
+        phone: { type: String },
+        photo: { type: String }
     }, {
         // add createdAt and updatedAt timestamps
         timestamps: true

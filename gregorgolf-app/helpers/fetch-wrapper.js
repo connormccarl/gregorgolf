@@ -18,8 +18,12 @@ function request(method) {
             headers: authHeader(url)
         };
         if (body) {
-            requestOptions.headers['Content-Type'] = 'application/json';
-            requestOptions.body = JSON.stringify(body);
+            if(!(body instanceof FormData)){
+                requestOptions.headers['Content-Type'] = 'application/json';
+                requestOptions.body = JSON.stringify(body);
+            } else {
+                requestOptions.body = body;
+            }
         }
         return fetch(url, requestOptions).then(handleResponse);
     }
