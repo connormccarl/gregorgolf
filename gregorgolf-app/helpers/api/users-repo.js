@@ -10,9 +10,11 @@ export const usersRepo = {
     authenticate,
     getAll,
     getById,
+    getByEmail,
     create,
     update,
     updatePassword,
+    updatePhoto,
     delete: _delete
 };
 
@@ -38,6 +40,14 @@ async function getAll() {
 
 async function getById(id) {
     return await User.findById(id);
+}
+
+async function getByEmail(email) {
+    const user = await User.findOne({ email: email });
+    
+    if (!user) throw 'Email not found';
+    
+    return user;
 }
 
 async function create(params) {
@@ -70,6 +80,18 @@ async function update(id, params) {
     if (params.password) {
         params.hash = bcrypt.hashSync(params.password, 10);
     }
+
+    // copy params properties to user
+    Object.assign(user, params);
+
+    await user.save();
+}
+
+async function updatePhoto(id, params) {
+    const user = await User.findById(id);
+
+    // validate
+    if (!user) throw 'User not found';
 
     // copy params properties to user
     Object.assign(user, params);

@@ -13,6 +13,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/router';
 import { userService } from 'services';
 import { Alert } from './Alert'
+import { NavLink } from '.';
 
 import classes from './Layout.module.css';
 
@@ -32,23 +33,22 @@ export function Layout({children}) {
 
   const links = data.map((item) => item.link === '#' ? 
     (
-      <h5 className={classes.title}>{item.label}</h5>
+      <h5 className={classes.title} key={item.label}>{item.label}</h5>
     )
     :
     (
-      <a
+      <NavLink
         className={classes.link}
         data-active={item.link === active || undefined}
         href={item.link}
         key={item.label}
-        onClick={(event) => {
-          event.preventDefault();
+        onClick={() => {
           setActive(item.link);
         }}
       >
         <item.icon className={classes.linkIcon} stroke={1.5} />
         <span>{item.label}</span>
-      </a>
+      </NavLink>
     ));
 
   return (
@@ -88,15 +88,21 @@ export function Layout({children}) {
         </AppShell.Section>
         <AppShell.Section>
           <Stack className={classes.footer} gap="0">
-            <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-              <IconUserCog className={classes.linkIcon} stroke={1.5} />
+            <NavLink 
+              className={classes.link}
+              data-active={"/account/profile" === active || undefined}
+              href="/account/profile"
+            >
+              <IconUserCog className={classes.linkIcon} stroke={1.5} onClick={(event) => {
+                setActive("/account/profile");
+              }} />
               <span>Edit Profile</span>
-            </a>
+            </NavLink>
 
-            <a href="#" className={classes.link} onClick={userService.logout}>
+            <NavLink href="#" className={classes.link} onClick={userService.logout}>
               <IconLogout className={classes.linkIcon} stroke={1.5} />
               <span>Logout</span>
-            </a>
+            </NavLink>
           </Stack>
         </AppShell.Section>
 

@@ -39,8 +39,8 @@ next-env.d.ts
 
 # google smtp credentials
 /google
-/lib/email/credentials.json
-/lib/email/token.json
+/helpers/email/credentials.json
+/helpers/email/token.json
 
 # build folders
 *.zip

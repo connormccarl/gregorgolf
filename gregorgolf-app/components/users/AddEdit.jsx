@@ -1,8 +1,10 @@
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
+import { Center, Stack, Avatar } from '@mantine/core';
 
 import { userService, alertService } from 'services';
 
@@ -11,6 +13,8 @@ export { AddEdit };
 function AddEdit(props) {
     const user = props?.user;
     const router = useRouter();
+    const [file, setFile] = useState(null);
+    const [image, setImage] = useState(props?.user.image);
 
     // form validation rules 
     const validationSchema = Yup.object().shape({
@@ -59,39 +63,73 @@ function AddEdit(props) {
         }
     }
 
+    // handle file upload
+    const hiddenFileInput = useRef(null);
+    const handleUpload = async (event) => {
+        console.log("here");
+
+        if(event.target.files){
+            const file = event.target.files[0];
+
+            try{
+                if(!file) return;
+
+                const returnObj = await userService.addPhoto(file, user.id);
+                console.log("api return:", returnObj);
+            } catch (error) {
+                console.log(error);
+                alertService.error(error);
+            }
+        }
+    }
+
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="row">
-                <div className="mb-3 col">
+        <Center>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <div className='mb-3'>
+                    <Avatar
+                        src={image}
+                        size={120}
+                        radius={120}
+                        mx="auto"
+                        className='mb-3'
+                    />
+                    <Center>
+                    { image === undefined ? (
+                        <div>
+                            <input type="file" onChange={handleUpload} ref={hiddenFileInput} style={{ display: 'none' }} />
+                            <button type="button" className="btn btn-primary" onClick={() => hiddenFileInput.current.click()} >
+                                Add Profile Photo
+                            </button>
+                        </div>
+                    ) : (
+                        <div>
+                            <button type="button" className="btn btn-secondary me-2">
+                                Remove Photo
+                            </button>
+                            <button type="button" className="btn btn-primary">
+                                Change Photo
+                            </button>
+                        </div>
+                    )}
+                   </Center>
+                </div>
+                <div className="mb-3">
                     <label className="form-label">First Name</label>
                     <input name="firstName" type="text" {...register('firstName')} className={`form-control ${errors.firstName ? 'is-invalid' : ''}`} />
                     <div className="invalid-feedback">{errors.firstName?.message}</div>
                 </div>
-                <div className="mb-3 col">
+                <div className="mb-3">
                     <label className="form-label">Last Name</label>
                     <input name="lastName" type="text" {...register('lastName')} className={`form-control ${errors.lastName ? 'is-invalid' : ''}`} />
                     <div className="invalid-feedback">{errors.lastName?.message}</div>
                 </div>
-            </div>
-            <div className="row">
-                <div className="mb-3 col">
-                    <label className="form-label">Job Title</label>
-                    <input name="job" type="text" {...register('job')} className={`form-control ${errors.job ? 'is-invalid' : ''}`} />
-                    <div className="invalid-feedback">{errors.job?.message}</div>
-                </div>
-                <div className="mb-3 col">
-                    <label className="form-label">Phone</label>
-                    <input name="phone" type="text" {...register('phone')} className={`form-control ${errors.phone ? 'is-invalid' : ''}`} />
-                    <div className="invalid-feedback">{errors.phone?.message}</div>
-                </div>
-            </div>
-            <div className="row">
-                <div className="mb-3 col">
+                <div className="mb-3">
                     <label className="form-label">Email</label>
                     <input name="email" type="text" {...register('email')} className={`form-control ${errors.email ? 'is-invalid' : ''}`} />
                     <div className="invalid-feedback">{errors.email?.message}</div>
                 </div>
-                <div className="mb-3 col">
+                <div className="mb-3">
                     <label className="form-label">
                         Password
                         {user && <em className="ms-1">(Leave blank to keep the same password)</em>}
@@ -99,15 +137,15 @@ function AddEdit(props) {
                     <input name="password" type="password" {...register('password')} className={`form-control ${errors.password ? 'is-invalid' : ''}`} />
                     <div className="invalid-feedback">{errors.password?.message}</div>
                 </div>
-            </div>
-            <div className="mb-3">
-                <button type="submit" disabled={formState.isSubmitting} className="btn btn-primary me-2">
-                    {formState.isSubmitting && <span className="spinner-border spinner-border-sm me-1"></span>}
-                    Save
-                </button>
-                <button onClick={() => reset(formOptions.defaultValues)} type="button" disabled={formState.isSubmitting} className="btn btn-secondary">Reset</button>
-                <Link href="/users" className="btn btn-link">Cancel</Link>
-            </div>
-        </form>
+                <div className="mb-3">
+                    <button type="submit" disabled={formState.isSubmitting} className="btn btn-primary me-2">
+                        {formState.isSubmitting && <span className="spinner-border spinner-border-sm me-1"></span>}
+                        Save
+                    </button>
+                    <button onClick={() => reset(formOptions.defaultValues)} type="button" disabled={formState.isSubmitting} className="btn btn-secondary">Reset</button>
+                    {/* <Link href="/users" className="btn btn-link">Cancel</Link> */}
+                </div>
+            </form>
+        </Center>
     );
 }

@@ -19,6 +19,9 @@ export const userService = {
     getById,
     update,
     updatePassword,
+    getByEmail,
+    sendPasswordReset,
+    addPhoto,
     delete: _delete
 };
 
@@ -50,6 +53,14 @@ async function getById(id) {
     return await fetchWrapper.get(`${baseUrl}/${id}`);
 }
 
+async function getByEmail(email) {
+    return await fetchWrapper.get(`${baseUrl}/id/${email}`);
+}
+
+async function sendPasswordReset(user){
+    return await fetchWrapper.post(`${baseUrl}/password/reset`, user);
+}
+
 async function updatePassword(email, params) {
     return await fetchWrapper.put(`${baseUrl}/password/${email}`, params);
 }
@@ -66,6 +77,16 @@ async function update(id, params) {
         // publish updated user to subscribers
         userSubject.next(user);
     }
+}
+
+async function addPhoto(file, id) {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("id", id);
+
+    console.log("in user service");
+
+    return await fetchWrapper.post(`${baseUrl}/photo`, formData);
 }
 
 // prefixed with underscored because delete is a reserved word in javascript
