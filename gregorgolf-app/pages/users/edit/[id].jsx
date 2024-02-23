@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
-import { Layout, AddEdit } from 'components/users';
+import { Layout } from '@/components';
+import { AddEdit } from 'components/users';
 import { Spinner } from 'components';
 import { userService, alertService } from 'services';
 
@@ -24,7 +25,7 @@ function Edit() {
     return (
         <Layout>
             <h1>Edit User</h1>
-            {user ? <AddEdit user={user} /> : <Spinner />}
+            {user ? <AddEdit user={user} admin={true} /> : <Spinner />}
         </Layout>
     );
 }

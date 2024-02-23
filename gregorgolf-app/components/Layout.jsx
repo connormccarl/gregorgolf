@@ -23,7 +23,7 @@ const data = [
   { link: '/bookings', label: 'My Bookings', icon: IconCalendarEvent, role: 'user' },
   { link: '#', label: 'Admin', role: 'admin'},
   { link: '/admin/bookings', label: 'Manage Bookings', icon: IconListDetails, role: 'admin' },
-  { link: '/admin/members', label: 'Manage Members', icon: IconUsers, role: 'admin' },
+  { link: '/users', label: 'Manage Members', icon: IconUsers, role: 'admin' },
 ];
 
 export function Layout({children}) {

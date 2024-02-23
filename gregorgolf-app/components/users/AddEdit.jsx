@@ -81,7 +81,8 @@ function AddEdit(props) {
     }
 
     const changePhoto = async (event) => {
-
+        await userService.removePhoto(image, user.id);
+        handleUpload(event);
     }
 
     return (
@@ -131,6 +132,16 @@ function AddEdit(props) {
                     <input name="email" type="text" {...register('email')} className={`form-control ${errors.email ? 'is-invalid' : ''}`} />
                     <div className="invalid-feedback">{errors.email?.message}</div>
                 </div>
+                {props?.admin && (
+                <div className="mb-3">
+                    <label className="form-label">Membership</label>
+                    <select {...register('membership')} className={`form-select ${errors.membership ? 'is-invalid' : ''}`}>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <div className="invalid-feedback">{errors.membership?.message}</div>
+                </div>
+                )}
                 <div className="mb-3">
                     <label className="form-label">
                         Password
@@ -145,7 +156,7 @@ function AddEdit(props) {
                         Save
                     </button>
                     <button onClick={() => reset(formOptions.defaultValues)} type="button" disabled={formState.isSubmitting} className="btn btn-secondary">Reset</button>
-                    {/* <Link href="/users" className="btn btn-link">Cancel</Link> */}
+                    {props?.admin && <Link href="/users" className="btn btn-link">Cancel</Link>}
                 </div>
             </form>
         </Center>
