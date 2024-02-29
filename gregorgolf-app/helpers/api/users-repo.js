@@ -6,6 +6,8 @@ import { db } from 'helpers/api';
 const { serverRuntimeConfig } = getConfig();
 const User = db.User;
 
+const secret = process.env.SECRET || serverRuntimeConfig.secret;
+
 export const usersRepo = {
     authenticate,
     getAll,
@@ -26,7 +28,7 @@ async function authenticate({ email, password }) {
     }
 
     // create a jwt token that is valid for 7 days
-    const token = jwt.sign({ sub: user.id }, serverRuntimeConfig.secret, { expiresIn: '7d' });
+    const token = jwt.sign({ sub: user.id }, secret, { expiresIn: '7d' });
 
     return {
         ...user.toJSON(),
