@@ -76,7 +76,7 @@ const getEventColor = (numGuests) => {
 }
 
 const schedule = timeslots.map((time, index) => (
-    <div className={`${classes.schedule} ${ index == 0 ? classes.scheduleFirst : '' }`}>
+    <div key={time} className={`${classes.schedule} ${ index == 0 ? classes.scheduleFirst : '' }`}>
         <div className={`${classes.scheduleTitle} ${index == 0 ? classes.scheduleTitleFirst : ''}`}>
             <span className={classes.scheduleTime}>{time}</span>
         </div>
@@ -84,7 +84,7 @@ const schedule = timeslots.map((time, index) => (
         <div className={`${classes.scheduleBlock} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
         <div className={`${classes.scheduleBlock} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
         { events.filter(event => event.start_time == time).map(event => (
-            <div className={`${classes.event} ${ event.bay == 1 ? classes.eventBay1 : classes.eventBay2 } ${getEventColor(event.guests.length)}`} style={{ height: event.hours * 54 - 4 }}>
+            <div key={event.bay + event.start_time} className={`${classes.event} ${ event.bay == 1 ? classes.eventBay1 : classes.eventBay2 } ${getEventColor(event.guests.length)}`} style={{ height: event.hours * 54 - 4 }}>
                 <span className="fw-bold">{event.member}</span> {getGroupName(event.guests.length)}
                 <br/><span className={classes.timeBlock}>{event.start_time + ' - ' + event.end_time}</span>
             </div>
