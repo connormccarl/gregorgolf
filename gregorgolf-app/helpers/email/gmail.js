@@ -2,8 +2,8 @@
 
 const { google } = require('googleapis');
 const MailComposer = require('nodemailer/lib/mail-composer');
-const credentials = require('./credentials.json');
-const tokens = require('./token.json');
+const credentials = process.env.GOOGLE_CREDENTIALS ? process.env.GOOGLE_CREDENTIALS : require('./credentials.json');
+const tokens = process.env.GOOGLE_TOKEN ? process.env.TOKEN : require('./token.json');
 
 const getGmailService = () => {
   const { client_secret, client_id, redirect_uris } = credentials.installed;
