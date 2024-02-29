@@ -4,8 +4,12 @@ import mongoose from 'mongoose';
 const { serverRuntimeConfig } = getConfig();
 const Schema = mongoose.Schema;
 
-mongoose.connect(process.env.MONGODB_URI || serverRuntimeConfig.connectionString);
-mongoose.Promise = global.Promise;
+try {
+    mongoose.connect(process.env.MONGODB_URI || serverRuntimeConfig.connectionString);
+    mongoose.Promise = global.Promise;
+} catch (error){
+    throw 'Can not connect to database';
+}
 
 export const db = {
     User: userModel()
