@@ -5,8 +5,6 @@ import { useRouter } from 'next/router';
 import { userService } from 'services';
 import { Nav, Alert } from 'components';
 
-import Header from '@/components/Header';
-
 // css files
 import '@mantine/core/styles.css'
 import { createTheme, MantineProvider } from '@mantine/core'
