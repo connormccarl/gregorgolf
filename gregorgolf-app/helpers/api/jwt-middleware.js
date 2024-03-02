@@ -3,7 +3,7 @@ import util from 'util';
 import getConfig from 'next/config';
 
 const { serverRuntimeConfig } = getConfig();
-const secret = process.env.SECRET || serverRuntimeConfig.secret;
+const secret = process.env.NEXT_PUBLIC_SECRET || serverRuntimeConfig.secret;
 
 export { jwtMiddleware };
 

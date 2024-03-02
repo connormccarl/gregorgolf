@@ -6,7 +6,7 @@ import { db } from 'helpers/api';
 const { serverRuntimeConfig } = getConfig();
 const User = db.User;
 
-const secret = process.env.SECRET || serverRuntimeConfig.secret;
+const secret = process.env.NEXT_PUBLIC_SECRET || serverRuntimeConfig.secret;
 
 export const usersRepo = {
     authenticate,
