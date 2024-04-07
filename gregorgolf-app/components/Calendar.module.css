@@ -15,8 +15,44 @@
         display: none;
     }
     
-    .columnTitle, .scheduleBlock, .event {
+    .columnTitleTwo, .scheduleBlockTwo {
         width: calc((100vw - 450px)/2);
+    }
+
+    .columnTitleOne, .scheduleBlockOne {
+        width: calc((100vw - 450px));
+    }
+
+    .event1Two {
+        width: calc((100vw - 450px)/8*1);
+    }
+
+    .event2Two {
+        width: calc((100vw - 450px)/8*2);
+    }
+
+    .event3Two {
+        width: calc((100vw - 450px)/8*3);
+    }
+
+    .event4Two {
+        width: calc(((100vw - 450px)/8*4) - 4px);
+    }
+
+    .event1One {
+        width: calc((100vw - 450px)/4*1);
+    }
+
+    .event2One {
+        width: calc((100vw - 450px)/4*2);
+    }
+
+    .event3One {
+        width: calc((100vw - 450px)/4*3);
+    }
+
+    .event4One {
+        width: calc(((100vw - 450px)/4*4) - 4px);
     }
 
     .eventBay1 {
@@ -37,8 +73,44 @@
         display: none;
     }
 
-    .columnTitle, .scheduleBlock, .event {
+    .columnTitleTwo, .scheduleBlockTwo, .event {
         width: calc((100vw - 125px)/2);
+    }
+
+    .columnTitleOne, .scheduleBlockOne {
+        width: calc((100vw - 125px));
+    }
+
+    .event1Two {
+        width: calc((100vw - 125px)/8*1);
+    }
+
+    .event2Two {
+        width: calc((100vw - 125px)/8*2);
+    }
+
+    .event3Two {
+        width: calc((100vw - 125px)/8*3);
+    }
+
+    .event4Two {
+        width: calc(((100vw - 125px)/8*4) - 4px);
+    }
+
+    .event1One {
+        width: calc((100vw - 125px)/4*1);
+    }
+
+    .event2One {
+        width: calc((100vw - 125px)/4*2);
+    }
+
+    .event3One {
+        width: calc((100vw - 125px)/4*3);
+    }
+
+    .event4One {
+        width: calc(((100vw - 125px)/4*4) - 4px);
     }
 
     .eventBay1 {
@@ -50,7 +122,7 @@
     }
 
     .grid {
-        padding-top: 94px !important;
+        padding-top: 150px !important;
     }
 
     .timeBlock {
@@ -70,7 +142,7 @@
     flex-direction: column;
     margin-bottom: -16px;
     color: var(--mantine-color-gray-8);
-    padding-top: 42px;
+    padding-top: 46px;
 }
 
 .bottomGrid {
@@ -131,13 +203,13 @@
     border-bottom: 1px solid var(--mantine-color-gray-5);
 }
 
-.columnTitle {
+.columnTitleTwo, .columnTitleOne {
     text-align: center;
     border-bottom: 1px solid var(--mantine-color-gray-5);
     border-right: 1px solid var(--mantine-color-gray-5);
 }
 
-.scheduleBlock {
+.scheduleBlockTwo, .scheduleBlockOne {
     height: 54px;
     border-bottom: 1px solid var(--mantine-color-gray-5);
     border-right: 1px solid var(--mantine-color-gray-5);
@@ -150,21 +222,5 @@
     border-radius: 4px;
     padding-left: 5px;
     line-height: 20px;
+    background-color: var(--mantine-color-light-green-6);
 }
-
-.event1 {
-    background-color: rgb(99, 218, 56);
-}
-
-.event2 {
-    background-color: rgb(246, 191, 38);
-}
-
-.event3 {
- background-color: rgb(239, 108, 0);
-}
-
-.event4 {
-    background-color: rgb(213, 0, 0);
-}
-
