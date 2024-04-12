@@ -11,7 +11,7 @@ import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
 import { from } from 'rxjs';
 
-const events_json = [
+/*const events_json = [
     {
         bay: '1',
         members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
@@ -68,11 +68,31 @@ const events_json = [
         effective_hours: 2,
     }
 ]
+*/
+
+const printTime = (timeslot) => {
+    const time = timeslot.split(' ')[0];
+    const meridian = timeslot.split(' ')[1];
+
+    const newTime = time.split(':')[0] + ":" + time.split(':')[1] + ' ' + meridian; 
+
+    return newTime;
+}
 
 let timeslots_json = [];
-for(let i = 0; i < 24; i++){
+for(let i = 0; i < 28; i++){
+    // set display value in booking times for timeslot
+    let displayValue = '';
+    if(i >= 24){
+        displayValue += '(+1) ';
+    }
+
+    displayValue += printTime(new Date(new Date('2024-04-05T08:00:00.000Z').setHours(i,0,0,0)).toLocaleTimeString());
+
     timeslots_json.push({
+        display: i < 24 ? true : false,
         time: new Date(new Date('2024-04-05T08:00:00.000Z').setHours(i,0,0,0)),
+        value: displayValue
     });
 }
 
@@ -108,11 +128,12 @@ export default function Calendar({ events: data }) {
 
     useEffect(() => {
         console.log("master page events: ", events);
-        console.log("master timeslosts: ", timeslots);
+        console.log("master timeslots: ", timeslots);
     })
 
     useEffect(() => {
         console.log("entering useEffect first load");
+        // populate members list for book a slot for a member
         userService.getAll().then(x => {
             setMembers(x.map((member) => { 
                 const memberItem = {};
@@ -124,21 +145,22 @@ export default function Calendar({ events: data }) {
             }));
         });
 
+        // set logged in user
         setUser(userService.userValue);
 
+        // set events to parameter data
         console.log("parameter events: ", data);
         setEvents(data);
+
         // update booked timeslots
         data.forEach((event) => {
+            // find event start timeslot
+            const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === event.effective_start_time.toLocaleTimeString());
+
+            // iterate through each hour in timeslot and set booked flag
             for(let i = 0; i < event.effective_hours; i++){
-                //console.log("locale time: ", event.effective_start_time.toLocaleTimeString());
-                //console.log("timeslot time: ", timeslots_json[0].time.toLocaleTimeString());
-
-                // convert time to currTime in blocked out event section
-                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === event.effective_start_time.toLocaleTimeString());
-                const currTimeslotIndex = timeslotIndex + i;
-
                 // update timeslot record
+                const currTimeslotIndex = timeslotIndex + i;
                 const currTimeslot = timeslots_json[currTimeslotIndex];
                 if(currTimeslot){ 
                     // update bay timeslot to booked
@@ -150,6 +172,28 @@ export default function Calendar({ events: data }) {
                 }
             }
         });
+
+        // update booked timeslots into the next day
+        eventService.getNextDayAvailability()
+            .then(x => x.forEach((event) => {
+                // find event start timeslot
+                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.start_time.getTime());
+
+                // iterate through each hour in timeslot and set booked flag
+                for(let i = 0; i < event.hours; i++){
+                    // update timeslot record
+                    const currIndex = timeslotIndex + i;
+                    const currTimeslot = timeslots_json[currIndex];
+                    if(currTimeslot){ 
+                        // update bay timeslot to booked
+                        if(event.bay == '1'){
+                            currTimeslot.bay1_booked = true;
+                        } else {
+                            currTimeslot.bay2_booked = true;
+                        }
+                    }
+                }
+        }));
 
         setTimeslots(timeslots_json);
     }, []);
@@ -274,38 +318,76 @@ export default function Calendar({ events: data }) {
         }
     }
 
+    const getStartTimes = () => {
+        const workingTimeslots = timeslots.filter(timeslot => timeslot.display === true);
+        const workingDuration = parseInt(playingTime);
+        for(let i = 0; i < workingTimeslots.length; i++){
+            const workingSlot = workingTimeslots[i];
+
+            // see if unavailable
+            let unavailable = workingSlot.bay1_booked;
+            // if not available for the entire duration, unavailable
+            if(workingDuration > 1) {
+                for(let x = 1; x < workingDuration; x++){
+                    if(timeslots[i + x].bay1_booked === true){
+                        unavailable = true;
+                    }
+                }
+            }
+            workingSlot.bay1_available = !unavailable;
+        }
+
+        console.log("workingTimeslots: ", workingTimeslots);
+
+        return workingTimeslots.map(timeslot => {
+            const listItem = {};
+
+            listItem['value'] = timeslot.time.toISOString();
+            listItem['label'] = timeslot.value;
+
+            if(timeslot.bay1_available === false){
+                listItem['disabled'] = true;
+            }
+
+            return listItem;
+        });
+    }
+
     const addEvent = async () => {
         if(bookingFor === 'other'){
             setBookingMember(await userService.getById(bookingMemberId));
         }
 
-        events.push({
+        /*setEvents(events.push({
             bay: bookingBay,
             members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
             guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
             hours: parseInt(playingTime),
             date: bookingDate,
             start_time: startTime,
-            end_time: endTime
-        });
+            end_time: endTime,
+            effective_hours: parseInt(playingTime),
+            effective_start_time: startTime,
+            effective_end_time: endTime,
+        }));*/
 
         close();
     };
-
-    const schedule = timeslots.map((timeslot, index) => (
+    
+    const schedule = timeslots.filter((item) => item.display === true).map((timeslot, index) => (
         <div key={timeslot.time} className={`${classes.schedule} ${ index == 0 ? classes.scheduleFirst : '' }`}>
             <div className={`${classes.scheduleTitle} ${index == 0 ? classes.scheduleTitleFirst : ''}`}>
-                <span className={classes.scheduleTime}>{timeslot.time.toLocaleTimeString()}</span>
+                <span className={classes.scheduleTime}>{printTime(timeslot.time.toLocaleTimeString())}</span>
             </div>
             <div className={`${classes.spacer} ${ index == 23 ? classes.bottomGrid : '' }`}>&nbsp;</div>
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
-            {events.filter(event => event.effective_start_time.toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
+            {events && events.filter(event => event.effective_start_time.toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
                     <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == '2' && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
                         <span className="fw-bold">{event.members.map((m) => {
                             return <span>{m.firstName} {m.lastName}</span>
                         })}</span> {event.guests + 1}
-                        <br/><span className={classes.timeBlock}>{event.start_time.toLocaleTimeString() + ' - ' + event.end_time.toLocaleTimeString()}</span>
+                        <br/><span className={classes.timeBlock}>{printTime(event.start_time.toLocaleTimeString()) + ' - ' + printTime(event.end_time.toLocaleTimeString())}</span>
                     </div>
                 ))
             }
@@ -385,13 +467,13 @@ export default function Calendar({ events: data }) {
                     value={startTime}
                     onChange={setStartTime}
                     placeholder='Start Time'
-                    data={timeslots}
+                    data={getStartTimes()}
                 />
                 <Select
                     value={endTime}
                     onChange={setEndTime}
                     placeholder='End Time'
-                    data={timeslots}
+                    data={[{value: '1', label: 'Enabled'},{value: '2', label: 'Disabled', disabled: true}]}
                 />
                 <Group justify='space-between'>
                     <Button color="red" onClick={close}>

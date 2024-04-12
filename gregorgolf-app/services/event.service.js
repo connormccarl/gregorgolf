@@ -10,9 +10,10 @@ const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
 
 export const eventService = {
     getByDate,
+    getNextDayAvailability,
 };
 
-async function getByDate(date) {
+async function getByDate(addedEvent) {
     //await fetchWrapper.post(`${baseUrl}/register`, user);
     const events_json = [
         {
@@ -57,5 +58,30 @@ async function getByDate(date) {
         }
     ];
 
+    //events_json.push(addedEvent);
+
     return events_json;
+}
+
+async function getNextDayAvailability(){
+     const events_json = [
+        {
+            bay: '1',
+            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
+            guests: 0,
+            hours: 3,
+            start_time: new Date('2024-04-06T06:00:00.000Z'),
+            end_time: new Date('2024-04-06T09:00:00.000Z'),
+        },
+        {
+            bay: '2',
+            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
+            guests: 3,
+            hours: 4,
+            start_time: new Date('2024-04-06T07:00:00.000Z'),
+            end_time: new Date('2024-04-06T11:00:00.000Z'),
+        },
+     ]
+
+     return events_json;
 }

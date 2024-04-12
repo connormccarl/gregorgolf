@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import { Layout } from '@/components'
 import Calendar from '@/components/Calendar'
+import { Loader } from '@mantine/core'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -54,7 +55,7 @@ const loadData = async () => {
 
   return (
     <Layout>
-      {events ? <Calendar events={events} /> : <div>nothing</div>}
+      {events ? <Calendar events={events} /> : <Loader color="lime" type="bars" />}
     </Layout>
   )
 }
