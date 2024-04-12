@@ -52,7 +52,7 @@ async function handleResponse(response) {
     if (!response.ok) {
         if ([401, 403].includes(response.status) && userService.userValue) {
             // auto logout if 401 Unauthorized or 403 Forbidden response returned from api
-            userService.logout();
+            //userService.logout();
         }
 
         // get error message from body or default to response status
