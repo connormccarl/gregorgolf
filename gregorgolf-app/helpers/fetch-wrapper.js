@@ -35,7 +35,8 @@ function authHeader(url) {
     // return auth header with jwt if user is logged in and request is to the api url
     const user = userService.userValue;
     const isLoggedIn = user?.token;
-    const isApiUrl = url.startsWith(process.env.NEXT_PUBLIC_API_URI);
+    //const isApiUrl = url.startsWith(process.env.NEXT_PUBLIC_API_URI);
+    const isApiUrl = url.startsWith('https://gregor-golf.vercel.app/api');
     if (isLoggedIn && isApiUrl) {
         return { Authorization: `Bearer ${user.token}` };
     } else {

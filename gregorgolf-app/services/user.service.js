@@ -7,7 +7,8 @@ import { alertService } from './alert.service';
 
 const { publicRuntimeConfig } = getConfig();
 
-const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
+//const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
+const baseUrl = 'https://gregor-golf.vercel.app/api/users';
 const userSubject = new BehaviorSubject(typeof window !== 'undefined' && JSON.parse(localStorage.getItem('user')));
 
 export const userService = {

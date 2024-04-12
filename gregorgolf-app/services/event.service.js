@@ -6,7 +6,8 @@ import { alertService } from './alert.service';
 
 const { publicRuntimeConfig } = getConfig();
 
-const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
+//const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
+const baseUrl = 'https://gregor-golf.vercel.app/api/users';
 
 export const eventService = {
     getByDate,
