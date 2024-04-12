@@ -36,7 +36,7 @@ function authHeader(url) {
     const user = userService.userValue;
     const isLoggedIn = user?.token;
     //const isApiUrl = url.startsWith(process.env.NEXT_PUBLIC_API_URI);
-    const isApiUrl = url.startsWith('https://gregor-golf.vercel.app/api');
+    const isApiUrl = url.startsWith('https://gregor-golf.vercel.app/api/users');
     if (isLoggedIn && isApiUrl) {
         return { Authorization: `Bearer ${user.token}` };
     } else {
