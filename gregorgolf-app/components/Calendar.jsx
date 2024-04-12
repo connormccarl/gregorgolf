@@ -384,8 +384,8 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => event.effective_start_time.toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
                     <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == '2' && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        <span className="fw-bold">{event.members.map((m) => {
-                            return <span>{m.firstName} {m.lastName}</span>
+                        <span className="fw-bold">{event.members.map((m, index) => {
+                            return <span key={index}>{m.firstName} {m.lastName}</span>
                         })}</span> {event.guests + 1}
                         <br/><span className={classes.timeBlock}>{printTime(event.start_time.toLocaleTimeString()) + ' - ' + printTime(event.end_time.toLocaleTimeString())}</span>
                     </div>
