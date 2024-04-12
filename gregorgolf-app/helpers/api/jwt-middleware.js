@@ -16,8 +16,7 @@ function jwtMiddleware(req, res) {
             '/api/users/authenticate',
             /^\/api\/users\/password\/.*/,
             /^\/api\/users\/id\/.*/,
-            /^\/api\/users\/.*/,
-            'https://gregor-golf.vercel.app/api/users/authenticate'
+            /^\/api\/users\/.*/
         ]
     });
 
