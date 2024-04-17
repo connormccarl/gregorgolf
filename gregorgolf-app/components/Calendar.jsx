@@ -353,6 +353,19 @@ export default function Calendar({ events: data }) {
         });
     }
 
+    const getEndTimes = () => {
+        const startIndex = timeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(startTime).getTime());
+        const workingDuration = parseInt(playingTime);
+        const endIndex = startIndex + workingDuration;
+
+        const listItem = {};
+
+        listItem['value'] = timeslots[endIndex].time.toISOString();
+        listItem['label'] = timeslots[endIndex].value;
+
+        return [listItem];
+    }
+
     const addEvent = async () => {
         if(bookingFor === 'other'){
             setBookingMember(await userService.getById(bookingMemberId));
@@ -473,7 +486,7 @@ export default function Calendar({ events: data }) {
                     value={endTime}
                     onChange={setEndTime}
                     placeholder='End Time'
-                    data={[{value: '1', label: 'Enabled'},{value: '2', label: 'Disabled', disabled: true}]}
+                    data={getEndTimes()}
                 />
                 <Group justify='space-between'>
                     <Button color="red" onClick={close}>
