@@ -4,6 +4,7 @@ import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-r
 import { DatePickerInput } from '@mantine/dates';
 import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useForm } from '@mantine/form';
 
 import { userService, eventService } from 'services';
 
@@ -99,19 +100,22 @@ for(let i = 0; i < 28; i++){
 //console.log(timeslots_json);
 //console.log(events_json);
 
-const oldtimeslots = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM','7 AM','8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM','8 PM','9 PM','10 PM','11 PM']
+const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
 
 export default function Calendar({ events: data }) {
+    // event fields
     const [events, setEvents] = useState(null);
     const [timeslots, setTimeslots] = useState(timeslots_json);
 
-    const [date, setDate] = useState(new Date());
+    // calendar view fields
+    const [date, setDate] = useState(getCurrentDay());
     const [view, setView] = useState('Both');
     const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
+    
+    // book a slot fields
     const [opened, { open, close }] = useDisclosure(false);
-
     const [bookingBay, setBookingBay] = useState('1');
-    const [bookingDate, setBookingDate] = useState(new Date());
+    const [bookingDate, setBookingDate] = useState(getCurrentDay());
     const [bookingFor, setBookingFor] = useState('self');
     const [bookingMemberId, setBookingMemberId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -123,8 +127,30 @@ export default function Calendar({ events: data }) {
     ]);
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
+
+    // page fields
     const [user, setUser] = useState(null);
     const [bookingMember, setBookingMember] = useState(null);
+
+    // book a slot form settings
+    const form = useForm({
+        mode: 'controlled',
+        initialValues: {
+            bay: '1',
+            date: new Date(),
+            for: 'self',
+            member: null,
+            members: [],
+            time: '1',
+            players: '1',
+            playersData: [
+                { label: 'Single Member', value: '1' },
+                { label: 'Member with 1 Guest - $10', value: '2' }
+            ],
+            startTime: null,
+            endTime: null,
+        }
+    });
 
     useEffect(() => {
         console.log("master page events: ", events);
@@ -204,17 +230,19 @@ export default function Calendar({ events: data }) {
     }, [date]);
 
     */
-    const loadData = async () => {
-        let todaysEvents;
-
+    const processEventsForDisplay = (newEvent) => {
+        /*
         await eventService.getByDate(date)
             .then(x => todaysEvents = x);
+        */
 
-        todaysEvents.map((event) => {
+        let currEvents = [...events, newEvent];
+
+        currEvents.map((event) => {
             // calculate effective start time
             let currStartTime = new Date(event.start_time.getTime());
             let currHours = event.hours;
-            while(currStartTime < new Date(new Date().setHours(0,0,0,0))){
+            while(currStartTime < new Date(new Date('2024-04-05T08:00:00.000Z').setHours(0,0,0,0))){
                 // add an hour
                 currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
                 currHours -= 1;
@@ -223,7 +251,7 @@ export default function Calendar({ events: data }) {
             
             // calculate effective end time
             let currEndTime = new Date(event.end_time.getTime());
-            while(currEndTime > new Date(date.setHours(24,0,0,0))){
+            while(currEndTime > new Date(new Date('2024-04-05T08:00:00.000Z').setHours(24,0,0,0))){
                 currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
                 currHours -= 1;
             }
@@ -233,8 +261,9 @@ export default function Calendar({ events: data }) {
             event.effective_hours = currHours;
         });
         
-
-        setEvents(todaysEvents);
+        console.log("currEvents: ", currEvents);
+    
+        setEvents([...currEvents]);
     }
 
     /*
@@ -366,25 +395,38 @@ export default function Calendar({ events: data }) {
         return [listItem];
     }
 
+    const isNull = (value) => typeof value === "object" && !value;
+
     const addEvent = async () => {
-        if(bookingFor === 'other'){
+        if(bookingFor === 'other' && isNull(bookingMemberId)){
+            alert("Please select a member to book a slot for.");
+        }
+        
+        if (isNull(startTime) || isNull(endTime)) {
+            alert ("Please select a start/end time.");
+        }
+        
+        if(bookingFor === 'other') {
             setBookingMember(await userService.getById(bookingMemberId));
         }
 
-        /*setEvents(events.push({
+        if((bookingFor === 'self' || !isNull(bookingMemberId)) && !isNull(startTime) && !isNull(endTime)){
+        console.log("date: ", bookingDate);
+
+        console.log("start events: ", events);
+        await processEventsForDisplay({
             bay: bookingBay,
             members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
             guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
             hours: parseInt(playingTime),
             date: bookingDate,
-            start_time: startTime,
-            end_time: endTime,
-            effective_hours: parseInt(playingTime),
-            effective_start_time: startTime,
-            effective_end_time: endTime,
-        }));*/
+            start_time: new Date(startTime),
+            end_time: new Date(endTime),
+        });
+        console.log("end events: ", events);
 
-        close();
+        //close();
+       }
     };
     
     const schedule = timeslots.filter((item) => item.display === true).map((timeslot, index) => (
