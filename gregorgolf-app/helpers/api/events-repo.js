@@ -4,11 +4,17 @@ const Event = db.Event;
 
 export const eventsRepo = {
     create,
+    getAll,
 };
 
 async function create(event) {
     // validate
-    if (await Event.findOne({ startTime: event.startTime })) {
+    if (await Event.findOne({ 
+            $and: [
+                { startTime: event.startTime },
+                { bay: event.bay }
+            ]
+        })) {
         throw 'There is already an event starting at: ' + event.startTime + '.';
     }
 
@@ -16,4 +22,8 @@ async function create(event) {
 
     // save event
     await newEvent.save();
+}
+
+async function getAll() {
+    return await Event.find();
 }

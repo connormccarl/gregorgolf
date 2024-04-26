@@ -21,6 +21,7 @@ const printTime = (timeslot) => {
     return newTime;
 }
 
+
 let timeslots_json = [];
 for(let i = 0; i < 28; i++){
     // set display value in booking times for timeslot
@@ -29,11 +30,12 @@ for(let i = 0; i < 28; i++){
         displayValue += '(+1) ';
     }
 
-    displayValue += printTime(new Date(new Date('2024-04-05T08:00:00.000Z').setHours(i,0,0,0)).toLocaleTimeString());
+    // TEST VALUE: '2024-04-05T08:00:00.000Z'
+    displayValue += printTime(new Date(new Date().setHours(i,0,0,0)).toLocaleTimeString());
 
     timeslots_json.push({
         display: i < 24 ? true : false,
-        time: new Date(new Date('2024-04-05T08:00:00.000Z').setHours(i,0,0,0)),
+        time: new Date(new Date().setHours(i,0,0,0)),
         value: displayValue
     });
 }
@@ -44,15 +46,15 @@ for(let i = 0; i < 28; i++){
 const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
 
 export default function Calendar({ events: data }) {
-    // event fields
-    const [events, setEvents] = useState(null);
-    const [timeslots, setTimeslots] = useState(timeslots_json);
-
     // calendar view fields
     const [date, setDate] = useState(getCurrentDay());
     const [view, setView] = useState('Both');
     const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
     
+    // event fields
+    const [events, setEvents] = useState(null);
+    const [timeslots, setTimeslots] = useState(timeslots_json);
+
     // book a slot fields
     const [opened, { open, close }] = useDisclosure(false);
     const [bookingBay, setBookingBay] = useState('1');
@@ -68,6 +70,8 @@ export default function Calendar({ events: data }) {
     ]);
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
+    const [startTimes, setStartTimes] = useState([]);
+    const [endTimes, setEndTimes] = useState([]);
 
     // page fields
     const [user, setUser] = useState(null);
@@ -77,6 +81,30 @@ export default function Calendar({ events: data }) {
         console.log("master page events: ", events);
         console.log("master timeslots: ", timeslots);
     })
+
+    useEffect(() => {
+        setStartTime(null);
+        setEndTime(null);
+        getStartTimes();
+    }, [bookingBay, playingTime, events]);
+
+    useEffect(() => {
+        getEndTimes();
+    }, [startTime, bookingBay, playingTime, events]);
+
+    // autoset End Time selection
+    const autosetEndTime = (value) => {
+        if(!isNull(value)){
+            const startIndex = timeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(value).getTime());
+            const workingDuration = parseInt(playingTime);
+            const endIndex = startIndex + workingDuration;
+    
+            // autosets End Time selection
+            setEndTime(timeslots[endIndex].time.toISOString());
+        } else {
+            setEndTime(null);
+        }
+    };
 
     useEffect(() => {
         console.log("entering useEffect first load");
@@ -102,7 +130,7 @@ export default function Calendar({ events: data }) {
         // update booked timeslots
         data.forEach((event) => {
             // find event start timeslot
-            const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === event.effective_start_time.toLocaleTimeString());
+            const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === new Date(event.effective_start_time).toLocaleTimeString());
 
             // iterate through each hour in timeslot and set booked flag
             for(let i = 0; i < event.effective_hours; i++){
@@ -155,7 +183,7 @@ export default function Calendar({ events: data }) {
 
         currEvents.map((event) => {
             // calculate effective start time
-            let currStartTime = new Date(event.startTime.getTime());
+            let currStartTime = new Date(event.startTime).getTime();
             let currHours = event.hours;
             while(currStartTime < new Date(new Date('2024-04-05T08:00:00.000Z').setHours(0,0,0,0))){
                 // add an hour
@@ -165,7 +193,7 @@ export default function Calendar({ events: data }) {
             event.effective_start_time = currStartTime;
             
             // calculate effective end time
-            let currEndTime = new Date(event.endTime.getTime());
+            let currEndTime = new Date(event.endTime).getTime();
             while(currEndTime > new Date(new Date('2024-04-05T08:00:00.000Z').setHours(24,0,0,0))){
                 currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
                 currHours -= 1;
@@ -240,33 +268,57 @@ export default function Calendar({ events: data }) {
         for(let i = 0; i < workingTimeslots.length; i++){
             const workingSlot = workingTimeslots[i];
 
-            // see if unavailable
-            let unavailable = workingSlot.bay1_booked;
+            // see if unavailable based on bay
+            let unavailable;
+            
+            if(bookingBay == 1){
+                unavailable = workingSlot.bay1_booked;
+            } else {
+                unavailable = workingSlot.bay2_booked;
+            }
+            
             // if not available for the entire duration, unavailable
             if(workingDuration > 1) {
                 for(let x = 1; x < workingDuration; x++){
-                    if(timeslots[i + x].bay1_booked === true){
-                        unavailable = true;
+                    if(bookingBay == 1){
+                        if(timeslots[i + x].bay1_booked === true){
+                            unavailable = true;
+                        }
+                    } else {
+                        if(timeslots[i + x].bay2_booked === true){
+                            unavailable = true;
+                        }
                     }
                 }
             }
-            workingSlot.bay1_available = !unavailable;
+
+            if(bookingBay == 1){
+                workingSlot.bay1_available = !unavailable;
+            } else {
+                workingSlot.bay2_available = !unavailable;
+            }
         }
 
         console.log("workingTimeslots: ", workingTimeslots);
 
-        return workingTimeslots.map(timeslot => {
+        setStartTimes(workingTimeslots.map(timeslot => {
             const listItem = {};
 
             listItem['value'] = timeslot.time.toISOString();
             listItem['label'] = timeslot.value;
 
-            if(timeslot.bay1_available === false){
-                listItem['disabled'] = true;
+            if(bookingBay == 1){
+                if(timeslot.bay1_available === false){
+                    listItem['disabled'] = true;
+                }
+            } else {
+                if(timeslot.bay2_available === false){
+                    listItem['disabled'] = true;
+                }
             }
 
             return listItem;
-        });
+        }));
     }
 
     const getEndTimes = () => {
@@ -279,7 +331,7 @@ export default function Calendar({ events: data }) {
         listItem['value'] = timeslots[endIndex].time.toISOString();
         listItem['label'] = timeslots[endIndex].value;
 
-        return [listItem];
+        setEndTimes([listItem]);
     }
 
     // check if value is null
@@ -304,7 +356,7 @@ export default function Calendar({ events: data }) {
 
     const updateBookedTimeslots = (newEvent) => {
         let currTimeslots = timeslots;
-        const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.toLocaleTimeString() === newEvent.effective_start_time.toLocaleTimeString());
+        const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.toLocaleTimeString() === new Date(newEvent.effective_start_time).toLocaleTimeString());
 
         // iterate through each hour in timeslot and set booked flag
         for(let i = 0; i < newEvent.effective_hours; i++){
@@ -373,12 +425,12 @@ export default function Calendar({ events: data }) {
             <div className={`${classes.spacer} ${ index == 23 ? classes.bottomGrid : '' }`}>&nbsp;</div>
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
-            {events && events.filter(event => event.effective_start_time.toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
+            {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
                     <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
                         <span className="fw-bold">{event.members.map((m) => {
                             return <span>{m.firstName} {m.lastName}</span>
                         })}</span> {event.guests + 1}
-                        <br/><span className={classes.timeBlock}>{printTime(event.startTime.toLocaleTimeString()) + ' - ' + printTime(event.endTime.toLocaleTimeString())}</span>
+                        <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))
             }
@@ -458,22 +510,17 @@ export default function Calendar({ events: data }) {
                     value={startTime}
                     onChange={(value) => {
                         setStartTime(value);
-
-                        const startIndex = timeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(value).getTime());
-                        const workingDuration = parseInt(playingTime);
-                        const endIndex = startIndex + workingDuration;
-
-                        // autosets End Time selection
-                        setEndTime(timeslots[endIndex].time.toISOString());
+                        autosetEndTime(value);
                     }}
                     placeholder='Start Time'
-                    data={getStartTimes()}
+                    data={startTimes}
                 />
                 <Select
                     value={endTime}
                     onChange={setEndTime}
                     placeholder='End Time'
-                    data={getEndTimes()}
+                    data={endTimes}
+                    disabled
                 />
                 <Group justify='space-between'>
                     <Button color="red" onClick={close}>

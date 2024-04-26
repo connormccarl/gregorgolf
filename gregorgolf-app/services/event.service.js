@@ -15,12 +15,10 @@ export const eventService = {
 };
 
 async function addEvent(event) {
-    console.log("event here: ", event);
     await fetchWrapper.post(`${baseUrl}/add`, event);
 }
 
-async function getByDate(addedEvent) {
-    //await fetchWrapper.post(`${baseUrl}/register`, user);
+async function getByDate() { 
     const events_json = [
         {
             bay: 1,
@@ -64,9 +62,9 @@ async function getByDate(addedEvent) {
         }
     ];
 
-    //events_json.push(addedEvent);
+    //return events_json;
 
-    return events_json;
+    return await fetchWrapper.get(`${baseUrl}`);
 }
 
 async function getNextDayAvailability(){
