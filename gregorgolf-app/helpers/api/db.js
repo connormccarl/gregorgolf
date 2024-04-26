@@ -12,7 +12,8 @@ try {
 }
 
 export const db = {
-    User: userModel()
+    User: userModel(),
+    Event: eventModel()
 };
 
 // mongoose models with schema definitions
@@ -42,4 +43,29 @@ function userModel() {
     });
     
     return mongoose.models.User || mongoose.model('User', schema);
+}
+
+function eventModel() {
+    const schema = new Schema({
+        bay: { type: Number, required: true },
+        members: { type: Array, required: true },
+        guests: { type: Number, required: true },
+        hours: { type: Number, required: true },
+        date: { type: Date, required: true },
+        startTime: { type: Date, required: true },
+        endTime: { type: Date, required: true },
+    }, {
+        // add createdAt and updatedAt timestamps
+        timestamps: true
+    });
+
+    schema.set('toJSON', {
+        virtuals: true,
+        versionKey: false,
+        transform: function (doc, ret) {
+            delete ret._id;
+        }
+    });
+    
+    return mongoose.models.Event || mongoose.model('Event', schema);
 }

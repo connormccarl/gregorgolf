@@ -12,65 +12,6 @@ import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
 import { from } from 'rxjs';
 
-/*const events_json = [
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 0,
-        hours: 3,
-        start_time: new Date('2024-03-26T06:00:00.000Z'),
-        end_time: new Date('2024-03-26T09:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T06:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T09:00:00.000Z'),
-        effective_hours: 3,
-    },
-    {
-        bay: '2',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 3,
-        hours: 4,
-        start_time: new Date('2024-03-26T07:00:00.000Z'),
-        end_time: new Date('2024-03-26T11:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T07:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T11:00:00.000Z'),
-        effective_hours: 4,
-    },
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 1,
-        hours: 1,
-        start_time: new Date('2024-03-26T11:00:00.000Z'),
-        end_time: new Date('2024-03-26T12:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T11:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T12:00:00.000Z'),
-        effective_hours: 1,
-    },
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 2,
-        hours: 1,
-        start_time: new Date('2024-03-26T14:00:00.000Z'),
-        end_time: new Date('2024-03-26T15:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T14:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T15:00:00.000Z'),
-        effective_hours: 1,
-    },
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 2,
-        hours: 2,
-        start_time: new Date('2024-03-27T06:00:00.000Z'),
-        end_time: new Date('2024-03-27T08:00:00.000Z'),
-        effective_start_time: new Date('2024-03-27T06:00:00.000Z'),
-        effective_end_time: new Date('2024-03-27T08:00:00.000Z'),
-        effective_hours: 2,
-    }
-]
-*/
-
 const printTime = (timeslot) => {
     const time = timeslot.split(' ')[0];
     const meridian = timeslot.split(' ')[1];
@@ -132,26 +73,6 @@ export default function Calendar({ events: data }) {
     const [user, setUser] = useState(null);
     const [bookingMember, setBookingMember] = useState(null);
 
-    // book a slot form settings
-    const form = useForm({
-        mode: 'controlled',
-        initialValues: {
-            bay: '1',
-            date: new Date(),
-            for: 'self',
-            member: null,
-            members: [],
-            time: '1',
-            players: '1',
-            playersData: [
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $10', value: '2' }
-            ],
-            startTime: null,
-            endTime: null,
-        }
-    });
-
     useEffect(() => {
         console.log("master page events: ", events);
         console.log("master timeslots: ", timeslots);
@@ -190,7 +111,7 @@ export default function Calendar({ events: data }) {
                 const currTimeslot = timeslots_json[currTimeslotIndex];
                 if(currTimeslot){ 
                     // update bay timeslot to booked
-                    if(event.bay == '1'){
+                    if(event.bay == 1){
                         currTimeslot.bay1_booked = true;
                     } else {
                         currTimeslot.bay2_booked = true;
@@ -203,7 +124,7 @@ export default function Calendar({ events: data }) {
         eventService.getNextDayAvailability()
             .then(x => x.forEach((event) => {
                 // find event start timeslot
-                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.start_time.getTime());
+                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.startTime.getTime());
 
                 // iterate through each hour in timeslot and set booked flag
                 for(let i = 0; i < event.hours; i++){
@@ -212,7 +133,7 @@ export default function Calendar({ events: data }) {
                     const currTimeslot = timeslots_json[currIndex];
                     if(currTimeslot){ 
                         // update bay timeslot to booked
-                        if(event.bay == '1'){
+                        if(event.bay == 1){
                             currTimeslot.bay1_booked = true;
                         } else {
                             currTimeslot.bay2_booked = true;
@@ -224,13 +145,7 @@ export default function Calendar({ events: data }) {
         setTimeslots(timeslots_json);
     }, []);
 
-    /*
-    useEffect(() => {
-        loadData();
-    }, [date]);
-
-    */
-    const processEventsForDisplay = (newEvent) => {
+    const processEventsForDisplay = async (newEvent) => {
         /*
         await eventService.getByDate(date)
             .then(x => todaysEvents = x);
@@ -240,7 +155,7 @@ export default function Calendar({ events: data }) {
 
         currEvents.map((event) => {
             // calculate effective start time
-            let currStartTime = new Date(event.start_time.getTime());
+            let currStartTime = new Date(event.startTime.getTime());
             let currHours = event.hours;
             while(currStartTime < new Date(new Date('2024-04-05T08:00:00.000Z').setHours(0,0,0,0))){
                 // add an hour
@@ -250,7 +165,7 @@ export default function Calendar({ events: data }) {
             event.effective_start_time = currStartTime;
             
             // calculate effective end time
-            let currEndTime = new Date(event.end_time.getTime());
+            let currEndTime = new Date(event.endTime.getTime());
             while(currEndTime > new Date(new Date('2024-04-05T08:00:00.000Z').setHours(24,0,0,0))){
                 currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
                 currHours -= 1;
@@ -264,38 +179,10 @@ export default function Calendar({ events: data }) {
         console.log("currEvents: ", currEvents);
     
         setEvents([...currEvents]);
+
+        // update timeslots for current display
+        await updateBookedTimeslots(newEvent);
     }
-
-    /*
-    useEffect(() => {
-         // update booked timeslots
-        events_json.forEach((event) => {
-            for(let i = 0; i < event.effective_hours; i++){
-                // convert time to currTime in blocked out event section
-                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === event.effective_start_time.toLocaleTimeString());
-                const currTimeslotIndex = timeslotIndex + i;
-
-                // update timeslot record
-                const currTimeslot = timeslots[currTimeslotIndex];
-                if(currTimeslot){ 
-                    // update bay timeslot to booked
-                    if(event.bay == '1'){
-                        currTimeslot.bay1_booked = true;
-                    } else {
-                        currTimeslot.bay2_booked = true;
-                    }
-                }
-            }
-        });
-
-        setTimeslots(timeslots_json);
-
-        console.log(events);
-
-        console.log(timeslots);
-
-    }, [date]);
-    */
 
     useEffect(() => {
         if(playingTime == '1'){
@@ -333,7 +220,7 @@ export default function Calendar({ events: data }) {
             case 3:
                 return view === 'Both' ? classes.event4Two : classes.event4One;
             default: 
-                return view === 'Both' ? classes.event1Two : classes.event1One;
+                return view === 'Both' ? classes.event4Two : classes.event4One;
         }
     }
     
@@ -395,7 +282,47 @@ export default function Calendar({ events: data }) {
         return [listItem];
     }
 
+    // check if value is null
     const isNull = (value) => typeof value === "object" && !value;
+
+    // clear and reset book a slot fields
+    const resetBookingFields = () => {
+        setBookingBay('1');
+        setBookingDate(getCurrentDay());
+        setBookingFor('self');
+        setBookingMemberId(null);
+        setMembers([]);
+        setPlayingTime('1');
+        setBookingPlayers('1');
+        setBookingPlayersData([
+            { label: 'Single Member', value: '1' },
+            { label: 'Member with 1 Guest - $10', value: '2' }
+        ]);
+        setStartTime(null);
+        setEndTime(null);
+    };
+
+    const updateBookedTimeslots = (newEvent) => {
+        let currTimeslots = timeslots;
+        const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.toLocaleTimeString() === newEvent.effective_start_time.toLocaleTimeString());
+
+        // iterate through each hour in timeslot and set booked flag
+        for(let i = 0; i < newEvent.effective_hours; i++){
+            // update timeslot record
+            const currTimeslotIndex = timeslotIndex + i;
+            const currTimeslot = currTimeslots[currTimeslotIndex];
+            if(currTimeslot){ 
+                // update bay timeslot to booked
+                if(newEvent.bay == 1){
+                    currTimeslot.bay1_booked = true;
+                } else {
+                    currTimeslot.bay2_booked = true;
+                }
+            }
+        }
+
+        setTimeslots([...currTimeslots]);
+    };
 
     const addEvent = async () => {
         if(bookingFor === 'other' && isNull(bookingMemberId)){
@@ -411,21 +338,30 @@ export default function Calendar({ events: data }) {
         }
 
         if((bookingFor === 'self' || !isNull(bookingMemberId)) && !isNull(startTime) && !isNull(endTime)){
+        
         console.log("date: ", bookingDate);
 
-        console.log("start events: ", events);
-        await processEventsForDisplay({
-            bay: bookingBay,
+        // build event
+        const event = {
+            bay: parseInt(bookingBay),
             members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
             guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
             hours: parseInt(playingTime),
             date: bookingDate,
-            start_time: new Date(startTime),
-            end_time: new Date(endTime),
-        });
-        console.log("end events: ", events);
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+        };
 
-        //close();
+        // add event to current view (bypass a data refresh)
+        if(bookingDate.getTime() === date.getTime()){
+            await processEventsForDisplay(event);
+        }
+
+        // add event to database
+        eventService.addEvent(event);
+
+        close();
+        resetBookingFields();
        }
     };
     
@@ -438,11 +374,11 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => event.effective_start_time.toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
-                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == '2' && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
+                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
                         <span className="fw-bold">{event.members.map((m) => {
                             return <span>{m.firstName} {m.lastName}</span>
                         })}</span> {event.guests + 1}
-                        <br/><span className={classes.timeBlock}>{printTime(event.start_time.toLocaleTimeString()) + ' - ' + printTime(event.end_time.toLocaleTimeString())}</span>
+                        <br/><span className={classes.timeBlock}>{printTime(event.startTime.toLocaleTimeString()) + ' - ' + printTime(event.endTime.toLocaleTimeString())}</span>
                     </div>
                 ))
             }
@@ -520,7 +456,16 @@ export default function Calendar({ events: data }) {
                 <Text size="sm" fw={500}>Select Booking Time</Text>
                 <Select
                     value={startTime}
-                    onChange={setStartTime}
+                    onChange={(value) => {
+                        setStartTime(value);
+
+                        const startIndex = timeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(value).getTime());
+                        const workingDuration = parseInt(playingTime);
+                        const endIndex = startIndex + workingDuration;
+
+                        // autosets End Time selection
+                        setEndTime(timeslots[endIndex].time.toISOString());
+                    }}
                     placeholder='Start Time'
                     data={getStartTimes()}
                 />
