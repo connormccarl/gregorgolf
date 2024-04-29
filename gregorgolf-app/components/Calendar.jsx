@@ -21,26 +21,6 @@ const printTime = (timeslot) => {
     return newTime;
 }
 
-
-let timeslots_json = [];
-for(let i = 0; i < 28; i++){
-    // set display value in booking times for timeslot
-    let displayValue = '';
-    if(i >= 24){
-        displayValue += '(+1) ';
-    }
-
-    // TEST VALUE: '2024-04-05T08:00:00.000Z'
-    displayValue += printTime(new Date(new Date().setHours(i,0,0,0)).toLocaleTimeString());
-
-    // TEST VALUE: '2024-04-05T08:00:00.000Z'
-    timeslots_json.push({
-        display: i < 24 ? true : false,
-        time: new Date(new Date().setHours(i,0,0,0)),
-        value: displayValue
-    });
-}
-
 //console.log(timeslots_json);
 //console.log(events_json);
 
@@ -52,6 +32,26 @@ export default function Calendar({ events: data }) {
     const [view, setView] = useState('Both');
     const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
     
+    // calendar timeslots
+    let timeslots_json = [];
+    for(let i = 0; i < 28; i++){
+        // set display value in booking times for timeslot
+        let displayValue = '';
+        if(i >= 24){
+            displayValue += '(+1) ';
+        }
+
+        // TEST VALUE: '2024-04-05T08:00:00.000Z'
+        displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
+
+        // TEST VALUE: '2024-04-05T08:00:00.000Z'
+        timeslots_json.push({
+            display: i < 24 ? true : false,
+            time: new Date(new Date(date).setHours(i,0,0,0)),
+            value: displayValue
+        });
+    }
+
     // event fields
     const [events, setEvents] = useState(null);
     const [timeslots, setTimeslots] = useState(timeslots_json);
@@ -83,10 +83,148 @@ export default function Calendar({ events: data }) {
         console.log("master timeslots: ", timeslots);
     })
 
+    // update events based on date selection
+    useEffect(() => {
+        eventService.getByDate(new Date(date).toISOString())
+            .then(x => {
+                setEvents(calcEffectiveTimes(x, date));
+            })
+    }, [date])
+
+    const calcEffectiveTimes = (events, currDate) => {
+        const currEvents = events;
+
+        currEvents.map((event) => {
+            // calculate effective start time
+            let currStartTime = new Date(event.startTime);
+            let currHours = event.hours;
+    
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            while(currStartTime < new Date(new Date(currDate).setHours(0,0,0,0))){
+                // add an hour
+                currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
+                currHours -= 1;
+            }
+            event.effective_start_time = currStartTime;
+            
+            // calculate effective end time
+            let currEndTime = new Date(event.endTime);
+    
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            while(currEndTime > new Date(new Date(currDate).setHours(24,0,0,0))){
+                currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
+                currHours -= 1;
+            }
+            event.effective_end_time = currEndTime;
+            
+            // set effective hours
+            event.effective_hours = currHours;
+        });
+
+        return currEvents;
+    }
+
+    // update blocked out times on booking date selection
+    useEffect(() => {
+        setAvailableTimeslots();
+    }, [bookingDate]);
+
+    const setAvailableTimeslots = async () => {
+        // generate default timeslots
+        const currTimeslots = getTimeslots(bookingDate);
+
+        // get events for that day
+        let currEvents = [];
+        await eventService.getByDate(new Date(bookingDate).toISOString())
+            .then(x => currEvents = x);
+        
+        // calculate effective times
+        currEvents = calcEffectiveTimes(currEvents, bookingDate);
+
+        console.log("current events: ", currEvents);
+
+        // update timeslots based on current events
+        await currEvents.forEach((event) => {
+            // find event start timeslot
+            const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.toLocaleTimeString() === new Date(event.effective_start_time).toLocaleTimeString());
+
+            // iterate through each hour in timeslot and set booked flag
+            for(let i = 0; i < event.effective_hours; i++){
+                // update timeslot record
+                const currTimeslotIndex = timeslotIndex + i;
+                const currTimeslot = currTimeslots[currTimeslotIndex];
+                if(currTimeslot){ 
+                    // update bay timeslot to booked
+                    if(event.bay == 1){
+                        currTimeslot.bay1_booked = true;
+                    } else {
+                        currTimeslot.bay2_booked = true;
+                    }
+                }
+            }
+        });
+
+        
+        // update timeslots for next day availability
+        await eventService.getNextDayAvailability(new Date(bookingDate).toISOString())
+            .then(x => x.forEach((event) => {
+                // find event start timeslot
+                const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(event.startTime).getTime());
+
+                // iterate through each hour in timeslot and set booked flag
+                for(let i = 0; i < event.hours; i++){
+                    // update timeslot record
+                    const currIndex = timeslotIndex + i;
+                    const currTimeslot = currTimeslots[currIndex];
+                    if(currTimeslot){ 
+                        // update bay timeslot to booked
+                        if(event.bay == 1){
+                            currTimeslot.bay1_booked = true;
+                        } else {
+                            currTimeslot.bay2_booked = true;
+                        }
+                    }
+                }
+        }));
+        
+        console.log("current timeslots: ", currTimeslots);
+        // set timeslots for booking
+        await setTimeslots(currTimeslots);
+
+        // set start and end hours
+        setStartTime(null);
+        setEndTime(null);
+        getStartTimes(currTimeslots);
+    }
+
+    const getTimeslots = (currDate) => {
+        let timeslots = [];
+        for(let i = 0; i < 28; i++){
+            // set display value in booking times for timeslot
+            let displayValue = '';
+            if(i >= 24){
+                displayValue += '(+1) ';
+            }
+
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            displayValue += printTime(new Date(new Date(currDate).setHours(i,0,0,0)).toLocaleTimeString());
+
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            timeslots.push({
+                display: i < 24 ? true : false,
+                time: new Date(new Date(currDate).setHours(i,0,0,0)),
+                value: displayValue
+            });
+        }
+
+        return timeslots;
+    };
+
+    // handle start and end times
     useEffect(() => {
         setStartTime(null);
         setEndTime(null);
-        getStartTimes();
+        getStartTimes(timeslots);
     }, [bookingBay, playingTime, events]);
 
     useEffect(() => {
@@ -150,7 +288,7 @@ export default function Calendar({ events: data }) {
         });
 
         // update booked timeslots into the next day
-        eventService.getNextDayAvailability()
+        eventService.getNextDayAvailability(new Date().toISOString())
             .then(x => x.forEach((event) => {
                 // find event start timeslot
                 const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.startTime.getTime());
@@ -175,39 +313,8 @@ export default function Calendar({ events: data }) {
     }, []);
 
     const processEventsForDisplay = async (newEvent) => {
-        /*
-        await eventService.getByDate(date)
-            .then(x => todaysEvents = x);
-        */
-
         let currEvents = [...events, newEvent];
-
-        currEvents.map((event) => {
-            // calculate effective start time
-            let currStartTime = new Date(event.startTime).getTime();
-            let currHours = event.hours;
-            while(currStartTime < new Date(new Date('2024-04-05T08:00:00.000Z').setHours(0,0,0,0))){
-                // add an hour
-                currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
-                currHours -= 1;
-            }
-            event.effective_start_time = currStartTime;
-            
-            // calculate effective end time
-            let currEndTime = new Date(event.endTime).getTime();
-            while(currEndTime > new Date(new Date('2024-04-05T08:00:00.000Z').setHours(24,0,0,0))){
-                currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
-                currHours -= 1;
-            }
-            event.effective_end_time = currEndTime;
-            
-            // set effective hours
-            event.effective_hours = currHours;
-        });
-        
-        console.log("currEvents: ", currEvents);
-    
-        setEvents([...currEvents]);
+        setEvents(calcEffectiveTimes(currEvents, date));
 
         // update timeslots for current display
         await updateBookedTimeslots(newEvent);
@@ -263,8 +370,8 @@ export default function Calendar({ events: data }) {
         }
     }
 
-    const getStartTimes = () => {
-        const workingTimeslots = timeslots.filter(timeslot => timeslot.display === true);
+    const getStartTimes = (currTimeslots) => {
+        const workingTimeslots = currTimeslots.filter(timeslot => timeslot.display === true);
         const workingDuration = parseInt(playingTime);
         for(let i = 0; i < workingTimeslots.length; i++){
             const workingSlot = workingTimeslots[i];
@@ -406,7 +513,7 @@ export default function Calendar({ events: data }) {
         };
 
         // add event to current view (bypass a data refresh)
-        if(bookingDate.getTime() === date.getTime()){
+        if(bookingDate.getTime() === date.getTime() || new Date(endTime).toDateString() == date.toDateString()){
             await processEventsForDisplay(event);
         }
 
@@ -440,7 +547,10 @@ export default function Calendar({ events: data }) {
 
   return (
     <div>
-        <Modal opened={opened} onClose={close} title="Book a Slot" scrollAreaComponent={ScrollArea.Autosize}>
+        <Modal opened={opened} onClose={() => {
+            close();
+            resetBookingFields();  
+        }} title="Book a Slot" scrollAreaComponent={ScrollArea.Autosize}>
             <Stack>
                 <Text size="sm" fw={500}>Pick a Date</Text>
                 <DatePickerInput
@@ -524,7 +634,10 @@ export default function Calendar({ events: data }) {
                     disabled
                 />
                 <Group justify='space-between'>
-                    <Button color="red" onClick={close}>
+                    <Button color="red" onClick={() => {
+                        close();
+                        resetBookingFields();  
+                    }}>
                         Cancel
                     </Button>
                     <Button color="var(--mantine-color-light-green-6)" onClick={addEvent}>
@@ -535,7 +648,10 @@ export default function Calendar({ events: data }) {
         </Modal>
         <div className={classes.menuBar}>
             <Group justify='space-between' className={classes.menuGroup}>
-                <Button onClick={open} color="var(--mantine-color-light-green-6)">
+                <Button onClick={() => {
+                    setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
+                    open();
+                }} color="var(--mantine-color-light-green-6)">
                     Book a Slot
                 </Button>
                 <DatePickerInput

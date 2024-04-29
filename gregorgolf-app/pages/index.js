@@ -29,7 +29,7 @@ const loadData = async () => {
         let currHours = event.hours;
 
         // TEST VALUE: '2024-04-05T08:00:00.000Z'
-        while(currStartTime < new Date(new Date('2024-04-05T08:00:00.000Z').setHours(0,0,0,0))){
+        while(currStartTime < new Date(new Date().setHours(0,0,0,0))){
             // add an hour
             currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
             currHours -= 1;
@@ -40,7 +40,7 @@ const loadData = async () => {
         let currEndTime = new Date(event.endTime);
 
         // TEST VALUE: '2024-04-05T08:00:00.000Z'
-        while(currEndTime > new Date(new Date('2024-04-05T08:00:00.000Z').setHours(24,0,0,0))){
+        while(currEndTime > new Date(new Date().setHours(24,0,0,0))){
             currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
             currHours -= 1;
         }

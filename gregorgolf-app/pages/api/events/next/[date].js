@@ -5,7 +5,7 @@ export default apiHandler({
 });
 
 async function getByDate(req, res) {
-    const events = await eventsRepo.getByDate(req.query.date);
+    const events = await eventsRepo.getNextByDate(req.query.date);
 
     if (!events) throw 'No events Found';
 

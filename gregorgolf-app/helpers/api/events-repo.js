@@ -5,6 +5,8 @@ const Event = db.Event;
 export const eventsRepo = {
     create,
     getAll,
+    getByDate,
+    getNextByDate,
 };
 
 async function create(event) {
@@ -26,4 +28,40 @@ async function create(event) {
 
 async function getAll() {
     return await Event.find();
+}
+
+async function getByDate(date) {
+    const startDate = new Date(new Date(date).setHours(0,0,0,0));
+    const endDate = new Date(new Date(date).setHours(23,0,0,0));
+    
+    return await Event.find({ 
+        $or: [
+            { startTime: {
+                $gte: startDate,
+                $lte: endDate
+            }},
+            { endTime: {
+                $gte: startDate,
+                $lte: endDate 
+            }}
+        ]
+    });
+}
+
+async function getNextByDate(date) {
+    const startDate = new Date(new Date(date).setHours(0,0,0,0));
+    const endDate = new Date(new Date(date).setHours(4,0,0,0));
+    
+    return await Event.find({ 
+        $or: [
+            { startTime: {
+                $gte: startDate,
+                $lte: endDate
+            }},
+            { endTime: {
+                $gte: startDate,
+                $lte: endDate 
+            }}
+        ]
+    });
 }

@@ -63,11 +63,11 @@ async function getByDate(date) {
     ];
 
     //return events_json;
-    return await fetchWrapper.get(`${baseUrl}`);
-    //return await fetchWrapper.get(`${baseUrl}/${date}`);
+    //return await fetchWrapper.get(`${baseUrl}`);
+    return await fetchWrapper.get(`${baseUrl}/${date}`);
 }
 
-async function getNextDayAvailability(){
+async function getNextDayAvailability(date){
      const events_json = [
         {
             bay: 1,
@@ -87,5 +87,10 @@ async function getNextDayAvailability(){
         },
      ]
 
-     return events_json;
+     // add one day
+     const currDate = new Date(date);
+     currDate.setDate(currDate.getDate() + 1);
+
+     //return events_json;
+     return await fetchWrapper.get(`${baseUrl}/next/${currDate}`);
 }
