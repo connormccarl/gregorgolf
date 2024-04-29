@@ -33,6 +33,7 @@ for(let i = 0; i < 28; i++){
     // TEST VALUE: '2024-04-05T08:00:00.000Z'
     displayValue += printTime(new Date(new Date().setHours(i,0,0,0)).toLocaleTimeString());
 
+    // TEST VALUE: '2024-04-05T08:00:00.000Z'
     timeslots_json.push({
         display: i < 24 ? true : false,
         time: new Date(new Date().setHours(i,0,0,0)),

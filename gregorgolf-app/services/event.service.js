@@ -18,7 +18,7 @@ async function addEvent(event) {
     await fetchWrapper.post(`${baseUrl}/add`, event);
 }
 
-async function getByDate() { 
+async function getByDate(date) { 
     const events_json = [
         {
             bay: 1,
@@ -63,8 +63,8 @@ async function getByDate() {
     ];
 
     //return events_json;
-
     return await fetchWrapper.get(`${baseUrl}`);
+    //return await fetchWrapper.get(`${baseUrl}/${date}`);
 }
 
 async function getNextDayAvailability(){
