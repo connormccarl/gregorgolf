@@ -12,7 +12,18 @@ export const eventService = {
     addEvent,
     getByDate,
     getNextDayAvailability,
+    getAll,
+    getByMember,
+    delete: _delete
 };
+
+async function getAll() {
+    return await fetchWrapper.get(`${baseUrl}`);
+}
+
+async function getByMember(member) {
+    return await fetchWrapper.get(`${baseUrl}/member/${member}`);
+}
 
 async function addEvent(event) {
     await fetchWrapper.post(`${baseUrl}/add`, event);
@@ -93,4 +104,9 @@ async function getNextDayAvailability(date){
 
      //return events_json;
      return await fetchWrapper.get(`${baseUrl}/next/${currDate}`);
+}
+
+// prefixed with underscored because delete is a reserved word in javascript
+async function _delete(id) {
+    await fetchWrapper.delete(`${baseUrl}/id/${id}`);
 }

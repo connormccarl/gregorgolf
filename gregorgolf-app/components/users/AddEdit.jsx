@@ -13,7 +13,7 @@ export { AddEdit };
 function AddEdit(props) {
     const user = props?.user;
     const router = useRouter();
-    const [image, setImage] = useState(props?.user.photo);
+    const [image, setImage] = useState(props?.user?.photo);
 
     // form validation rules 
     const validationSchema = Yup.object().shape({

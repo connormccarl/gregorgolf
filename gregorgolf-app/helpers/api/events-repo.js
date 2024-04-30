@@ -7,6 +7,8 @@ export const eventsRepo = {
     getAll,
     getByDate,
     getNextByDate,
+    getByMember,
+    delete: _delete
 };
 
 async function create(event) {
@@ -28,6 +30,12 @@ async function create(event) {
 
 async function getAll() {
     return await Event.find();
+}
+
+async function getByMember(member) {
+    return await Event.find({
+        'members.0.id': member
+    });
 }
 
 async function getByDate(date) {
@@ -64,4 +72,8 @@ async function getNextByDate(date) {
             }}
         ]
     });
+}
+
+async function _delete(id) {
+    await Event.findByIdAndDelete(id);
 }
