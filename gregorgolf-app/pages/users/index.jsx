@@ -1,12 +1,15 @@
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle } from 'react';
 import moment from 'moment';
-import { Container, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
+import { Button, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
 import { IconSend, IconPhoneCall, IconAt, IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
 
 import { Spinner } from 'components';
 import { Layout } from 'components';
 import { userService } from 'services';
+
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 import classes from './Index.module.css';
 import { alertService } from '@/services';
@@ -66,10 +69,27 @@ function Index() {
 
     useEffect(() => {
         userService.getAll().then(x => {
-            setData(x);
-            setSortedData(x);
+            setData(modifyData(x));
+            setSortedData(modifyData(x));
+            console.log("user: ", x);
         });
     }, []);
+
+    // modify data for sorting capabilities (eliminate nested objects and make all strings)
+    const modifyData = (data) => {
+      return data.map((row) => {
+        const newRow = {};
+
+        newRow.id = row.id.toString();
+        newRow.photo = row.photo.toString();
+        newRow.name = row.firstName + ' ' + row.lastName;
+        newRow.email = row.email.toString();
+        newRow.membership = row.membership.toString();
+        newRow.createdAt = moment(row.createdAt).calendar();
+
+        return newRow;
+      });
+    };
 
     function deleteUser(id) {
         setData(data.map(x => {
@@ -100,10 +120,25 @@ function Index() {
         alertService.success("Membership updated");
     }
 
+    const exportData = () => {
+      const worksheet = XLSX.utils.json_to_sheet(sortedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+      // Buffer to store the generated Excel file
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+
+      saveAs(blob, "users.xlsx");
+    };
+
     return (
         <Layout>
             <h1>Users</h1>
             <Link href="/users/add" className="btn btn-sm btn-success mb-2">Add User</Link>
+            <Button onClick={exportData} color="var(--mantine-color-light-green-6)" className='ms-2 mb-2'>
+                Export
+            </Button>
 
             <ScrollArea>
             <TextInput
@@ -179,13 +214,13 @@ function Index() {
                         sortedData.map((user) => (
                             <Table.Tr key={user.id}>
                               <Table.Td>
-                                <Text>{moment(user.createdAt).format('MMM D, YYYY')}</Text>
+                                <Text>{user.createdAt}</Text>
                               </Table.Td>
                               <Table.Td>
                                 <Group gap="sm">
                                   <Avatar size={30} src={user.photo} radius={30} />
                                   <Text fz="sm" fw={500}>
-                                    {user.firstName + ' ' + user.lastName}
+                                    {user.name}
                                   </Text>
                                 </Group>
                               </Table.Td>

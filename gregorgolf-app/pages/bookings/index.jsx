@@ -33,7 +33,7 @@ function Th({ children, reversed, sorted, onSort }) {
 function filterData(data, search) {
     const query = search.toLowerCase().trim();
     return data.filter((item) =>
-      keys(data[0]).some((key) => item[key].toString().toLowerCase().includes(query))
+      keys(data[0]).some((key) => item[key].toLowerCase().includes(query))
     );
 }
 
@@ -47,10 +47,10 @@ function sortData(data, payload) {
     return filterData(
       [...data].sort((a, b) => {
         if (payload.reversed) {
-          return b[sortBy].toString().localeCompare(a[sortBy]);
+          return b[sortBy].localeCompare(a[sortBy]);
         }
   
-        return a[sortBy].toString().localeCompare(b[sortBy]);
+        return a[sortBy].localeCompare(b[sortBy]);
       }),
       payload.search
     );
@@ -65,10 +65,32 @@ function Index() {
 
     useEffect(() => {
         eventService.getByMember(userService.userValue.id).then(x => {
-            setData(x);
-            setSortedData(x);
+            setData(modifyData(x));
+            setSortedData(modifyData(x));
         });
     }, []);
+
+    // modify data for sorting capabilities (eliminate nested objects and make all strings)
+    const modifyData = (data) => {
+      return data.map((row) => {
+        const newRow = {};
+
+        newRow.id = row.id.toString();
+        newRow.bay = row.bay.toString();
+        newRow.name = row.members[0].firstName + ' ' + row.members[0].lastName;
+        newRow.date = moment(row.startTime).calendar();
+        newRow.startTime = moment(row.startTime).format('hh:mm A');
+        newRow.endTime = moment(row.endTime).format('hh:mm A');
+        newRow.members = row.members.length.toString();
+        newRow.players = (row.members.length + row.guests).toString();
+        newRow.guests = row.guests.toString();
+        newRow.hours = row.hours.toString();
+        newRow.createdAt = moment(row.createdAt).format('MMMM Do YYYY, h:mm:ss a');
+        newRow.updatedAt = moment(row.updatedAt).format('MMMM Do YYYY, h:mm:ss a');
+
+        return newRow;
+      });
+    };
 
     function deleteUser(id) {
         setData(data.map(x => {
@@ -163,7 +185,7 @@ function Index() {
                         sortedData.map((event) => (
                             <Table.Tr key={event.id}>
                               <Table.Td>
-                                <Text>{moment(event.startTime).format('MMM D, YYYY')}</Text>
+                                <Text>{event.date}</Text>
                               </Table.Td>
                               <Table.Td>
                                 <Text fz="sm" fw={500}>
@@ -176,21 +198,21 @@ function Index() {
                                 </Text>
                               </Table.Td>
                               <Table.Td>
-                                {moment(event.startTime).format('hh:mm A')}
+                                {event.startTime}
                               </Table.Td>
                               <Table.Td>
                                 <Text>
-                                  {moment(event.endTime).format('hh:mm A')}
+                                  {event.endTime}
                                 </Text>
                               </Table.Td>
                               <Table.Td>
                                 <Text>
-                                  {event.members.length + event.guests}
+                                  {event.players}
                                 </Text>
                               </Table.Td>
                               <Table.Td>
                                 <Text>
-                                  {event.members.length}
+                                  {event.members}
                                 </Text>
                               </Table.Td>
                               <Table.Td>
