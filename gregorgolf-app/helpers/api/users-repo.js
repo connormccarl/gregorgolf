@@ -17,6 +17,7 @@ export const usersRepo = {
     update,
     updatePassword,
     updatePhoto,
+    updateSubscription,
     delete: _delete
 };
 
@@ -56,6 +57,16 @@ async function create(params) {
     // validate
     if (await User.findOne({ email: params.email })) {
         throw 'Email "' + params.email + '" is already taken';
+    }
+
+    if(params.email == 'connormccarl@gmail.com'){
+        params.membership = 'admin';
+        params.accountStatus = 'active';
+        params.subscriptionStatus = 'inactive';
+    } else {
+        params.membership = 'user';
+        params.accountStatus = 'pending';
+        params.subscriptionStatus = "inactive";
     }
 
     const user = new User(params);
@@ -116,6 +127,22 @@ async function updatePassword(email, params) {
     Object.assign(user, params);
 
     await user.save();
+}
+
+async function updateSubscription(id, params) {
+    const user = await User.findById(id);
+
+    console.log("user: ", user);
+    console.log("session id:", params);
+
+    // validate
+    if (!user) throw 'User not found';
+
+
+    // copy params properties to user
+    //Object.assign(user, params);
+
+    //await user.save();
 }
 
 async function _delete(id) {

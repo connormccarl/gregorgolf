@@ -28,10 +28,12 @@ const data = [
 
 export function Layout({children}) {
   const router = useRouter()
+  const [user, setUser] = useState(userService.userValue);
   const [active, setActive] = useState(router.pathname);
   const [opened, { toggle, close }] = useDisclosure();
 
-  const links = data.map((item) => item.link === '#' ? 
+  // only display the correct links based on role
+  const links = data.filter((link) => user.membership === 'admin' ? true : (user.membership === link.role)).map((item) => item.link === '#' ? 
     (
       <h5 className={classes.title} key={item.label}>{item.label}</h5>
     )
@@ -57,7 +59,7 @@ export function Layout({children}) {
       navbar={{
         width: 300,
         breakpoint: 'sm',
-        collapsed: { mobile: !opened },
+        collapsed: { mobile: !opened, desktop: opened },
       }}
       padding="md"
       classNames={{
@@ -70,7 +72,6 @@ export function Layout({children}) {
           <Burger
             opened={opened}
             onClick={toggle}
-            hiddenFrom="sm"
             size="sm"
             color='white'
             className='ms-2'

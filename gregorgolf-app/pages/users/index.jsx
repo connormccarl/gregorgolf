@@ -4,8 +4,7 @@ import moment from 'moment';
 import { Button, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
 import { IconSend, IconPhoneCall, IconAt, IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
 
-import { Spinner } from 'components';
-import { Layout } from 'components';
+import { Layout, Alert, Spinner } from 'components';
 import { userService } from 'services';
 
 import * as XLSX from 'xlsx';
@@ -81,10 +80,11 @@ function Index() {
         const newRow = {};
 
         newRow.id = row.id.toString();
-        newRow.photo = row.photo.toString();
+        newRow.photo = row.photo?.toString();
         newRow.name = row.firstName + ' ' + row.lastName;
         newRow.email = row.email.toString();
-        newRow.membership = row.membership.toString();
+        newRow.membership = row.membership?.toString();
+        newRow.accountStatus = row.accountStatus.toString();
         newRow.createdAt = moment(row.createdAt).calendar();
 
         return newRow;
@@ -92,12 +92,12 @@ function Index() {
     };
 
     function deleteUser(id) {
-        setData(data.map(x => {
+        setSortedData(sortedData.map(x => {
             if (x.id === id) { x.isDeleting = true; }
             return x;
         }));
         userService.delete(id).then(() => {
-            setData(data => data.filter(x => x.id !== id));
+            setSortedData(sortedData => sortedData.filter(x => x.id !== id));
         });
     }
 
@@ -114,10 +114,18 @@ function Index() {
         setSortedData(sortData(data, { sortBy, reversed: reverseSortDirection, search: value }));
     }
 
+    // update membership type (user/admin)
     const updateMembership = async (id, membership) => {
         alertService.clear();
         await userService.update(id, { membership: membership });
         alertService.success("Membership updated");
+    }
+
+    // update account status (pending/active)
+    const updateAccountStatus = async (id, status) => {
+      alertService.clear();
+      await userService.update(id, { accountStatus: status });
+      alertService.success("Account Status updated");
     }
 
     const exportData = () => {
@@ -135,7 +143,6 @@ function Index() {
     return (
         <Layout>
             <h1>Users</h1>
-            <Link href="/users/add" className="btn btn-sm btn-success mb-2">Add User</Link>
             <Button onClick={exportData} color="var(--mantine-color-light-green-6)" className='ms-2 mb-2'>
                 Export
             </Button>
@@ -180,6 +187,13 @@ function Index() {
                         Membership
                         </Th>
                         <Th
+                        sorted={sortBy === 'accountStatus'}
+                        reversed={reverseSortDirection}
+                        onSort={() => setSorting('accountStatus')}
+                        >
+                        Account Status
+                        </Th>
+                        <Th
                         sorted={sortBy === 'subscriptionDate'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('subscriptionDate')}
@@ -192,13 +206,6 @@ function Index() {
                         onSort={() => setSorting('subscriptionStatus')}
                         >
                         Subscription Status
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'accountStatus'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('accountStatus')}
-                        >
-                        Account Status
                         </Th>
                         <Th
                         sorted={sortBy === 'subscriptionRenewal'}
@@ -231,10 +238,18 @@ function Index() {
                               </Table.Td>
                               <Table.Td>
                                 <Select
-                                    data={[{ value: 'user', label: 'User'}, { value: 'admin', 'label': 'Admin' }]}
-                                    defaultValue={user.membership}
-                                    style={{width: '7em'}}
-                                    onChange={(value, option) => updateMembership(user.id, value)}
+                                  data={[{ value: 'user', label: 'User'}, { value: 'admin', 'label': 'Admin' }]}
+                                  defaultValue={user.membership}
+                                  style={{width: '7em'}}
+                                  onChange={(value, option) => updateMembership(user.id, value)}
+                                />
+                              </Table.Td>
+                              <Table.Td>
+                                <Select
+                                  data={[{ value: 'pending', label: 'Pending'}, { value: 'active', 'label': 'Active' }]}
+                                  defaultValue={user.accountStatus}
+                                  style={{width: '8em'}}
+                                  onChange={(value, option) => updateAccountStatus(user.id, value)}
                                 />
                               </Table.Td>
                               <Table.Td>
@@ -245,11 +260,6 @@ function Index() {
                               <Table.Td>
                                 <Text>
                                   Subscription Status
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  Account Status
                                 </Text>
                               </Table.Td>
                               <Table.Td>

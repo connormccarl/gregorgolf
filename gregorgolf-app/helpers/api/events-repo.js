@@ -25,7 +25,8 @@ async function create(event) {
     const newEvent = new Event(event);
 
     // save event
-    await newEvent.save();
+    let { _id } = await newEvent.save();
+    return _id;
 }
 
 async function getAll() {

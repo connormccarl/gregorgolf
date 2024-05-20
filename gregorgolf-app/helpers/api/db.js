@@ -27,7 +27,9 @@ function userModel() {
         job: { type: String },
         phone: { type: String },
         photo: { type: String },
-        membership: { type: String }
+        membership: { type: String },
+        accountStatus: { type: String },
+        subscriptionStatus: { type: String }
     }, {
         // add createdAt and updatedAt timestamps
         timestamps: true

@@ -6,7 +6,9 @@ import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, Scrol
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 
-import { userService, eventService } from 'services';
+import { alertService, userService, eventService, subscriptionService } from 'services';
+
+import { loadStripe } from '@stripe/stripe-js';
 
 import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
@@ -25,6 +27,10 @@ const printTime = (timeslot) => {
 //console.log(events_json);
 
 const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
+
+const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+);
 
 export default function Calendar({ events: data }) {
     // calendar view fields
@@ -82,6 +88,26 @@ export default function Calendar({ events: data }) {
         console.log("master page events: ", events);
         console.log("master timeslots: ", timeslots);
     })
+
+    // Check to see if this is a redirect back from Stripe Checkout
+    useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+
+        // success so just display confirmation
+        if (query.get('success')) {
+            alert('Event Added!');
+        }
+
+        // failure so delete the event from the database
+        if (query.get('canceled')) {
+            const eventId = query.get('event');
+
+            // delete event
+            eventService.delete(eventId);
+
+            alert('Event not added. Please try again and complete the payment.');
+        }
+    }, [])
 
     // update events based on date selection
     useEffect(() => {
@@ -312,13 +338,13 @@ export default function Calendar({ events: data }) {
         setTimeslots(timeslots_json);
     }, []);
 
-    const processEventsForDisplay = async (newEvent) => {
+    const addEventToDisplay = async (newEvent) => {
         let currEvents = [...events, newEvent];
         setEvents(calcEffectiveTimes(currEvents, date));
 
-        // update timeslots for current display
+        // update timeslots for current display to booked = true
         await updateBookedTimeslots(newEvent);
-    }
+    };
 
     useEffect(() => {
         if(playingTime == '1'){
@@ -514,16 +540,31 @@ export default function Calendar({ events: data }) {
 
         // add event to current view (bypass a data refresh)
         if(bookingDate.getTime() === date.getTime() || new Date(endTime).toDateString() == date.toDateString()){
-            await processEventsForDisplay(event);
+            await addEventToDisplay(event);
         }
 
         // add event to database
-        eventService.addEvent(event);
+        let createdEventId = await eventService.addEvent(event);
+
+        //console.log("created Event Id: ", createdEventId);
 
         close();
         resetBookingFields();
+
+        // process payment
+        subscriptionService
+            .processEvent("price_1PGOrtLcjY6vEoOvQYGI8nNF", "subscription", createdEventId)
+            .then((x) => {
+                window.location.assign(x);
+            });
+        
        }
     };
+
+    const processPayment = async (e) => {
+        e.preventDefault();
+        subscriptionService.getSubscriptionData()
+    }
     
     const schedule = timeslots.filter((item) => item.display === true).map((timeslot, index) => (
         <div key={timeslot.time} className={`${classes.schedule} ${ index == 0 ? classes.scheduleFirst : '' }`}>
@@ -648,19 +689,27 @@ export default function Calendar({ events: data }) {
         </Modal>
         <div className={classes.menuBar}>
             <Group justify='space-between' className={classes.menuGroup}>
+                <Button onClick={processPayment} color="var(--mantine-color-light-green-6)">
+                    Pay
+                </Button>
                 <Button onClick={() => {
                     setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
                     open();
                 }} color="var(--mantine-color-light-green-6)">
                     Book a Slot
                 </Button>
-                <DatePickerInput
-                    leftSection={icon}
-                    leftSectionPointerEvents="none"
-                    placeholder="Pick a Day"
-                    value={date}
-                    onChange={setDate}
-                />
+                <Group>
+                    <Button onClick={() => setDate(getCurrentDay())} variant="default">
+                        Today
+                    </Button>
+                    <DatePickerInput
+                        leftSection={icon}
+                        leftSectionPointerEvents="none"
+                        placeholder="Pick a Day"
+                        value={date}
+                        onChange={setDate}
+                    />
+                </Group>
                 <SegmentedControl value={view} onChange={setView} data={['Bay 1', 'Bay 2', 'Both']} />
                 <Group>
                     <Button color="var(--mantine-color-light-green-6)" variant="light" onClick={() => setDate(dayjs(date).subtract(1, 'days').toDate())}>
@@ -673,13 +722,18 @@ export default function Calendar({ events: data }) {
             </Group>
             <Stack className={classes.menuStack}>
                 <Group justify='space-between'>
-                    <DatePickerInput
-                        leftSection={icon}
-                        leftSectionPointerEvents="none"
-                        placeholder="Pick a Day"
-                        value={date}
-                        onChange={setDate}
-                    />
+                    <Group>
+                        <Button onClick={() => setDate(getCurrentDay())} variant="default">
+                            Today
+                        </Button>
+                        <DatePickerInput
+                            leftSection={icon}
+                            leftSectionPointerEvents="none"
+                            placeholder="Pick a Day"
+                            value={date}
+                            onChange={setDate}
+                        />
+                    </Group>
                     <Group>
                         <Button color="var(--mantine-color-light-green-6)" variant="light" onClick={() => setDate(dayjs(date).subtract(1, 'days').toDate())}>
                             <IconChevronLeft style={{ width: rem(18), height: rem(18) }} stroke={1.5} />

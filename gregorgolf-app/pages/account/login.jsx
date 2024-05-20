@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
+
+import Stripe from 'stripe';
 
 import { SimpleGrid, Center, Image, Container, Title } from '@mantine/core';
 import { Layout } from 'components/account';
@@ -10,11 +13,32 @@ import { userService, alertService } from 'services';
 import { Alert } from '@/components';
 
 import classes from './Login.module.css';
+import { subscriptionService } from '@/services';
 
 export default Login;
 
 function Login() {
     const router = useRouter();
+
+    // Check to see if this is a redirect back from Stripe Checkout
+    useEffect(() => {
+        handleStripeCheckoutSuccess();
+    }, [])
+
+    // handle what happens when Stripe payment for new account creation is successful
+    const handleStripeCheckoutSuccess = async () => {
+        const query = new URLSearchParams(window.location.search);
+
+        // success so just display confirmation
+        if (query.get('success')) {
+            const userId = query.get('user');
+            const sessionId = query.get('session_id');
+
+            subscriptionService.updateAccount(userId, sessionId);
+
+            alertService.success('Registration successful. You can login now.', true);
+        }
+    }
 
     // form validation rules 
     const validationSchema = Yup.object().shape({

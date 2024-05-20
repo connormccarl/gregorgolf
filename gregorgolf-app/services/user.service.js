@@ -35,7 +35,8 @@ async function login(email, password) {
     localStorage.setItem('user', JSON.stringify(user));
 }
 
-function logout() {
+function logout(e) {
+    e.preventDefault();
     alertService.clear();
     // remove user from local storage, publish null to user subscribers and redirect to login page
     localStorage.removeItem('user');
@@ -120,7 +121,7 @@ async function _delete(id) {
     await fetchWrapper.delete(`${baseUrl}/${id}`);
 
     // auto logout if the logged in user deleted their own record
-    if (id === userSubject.value.id) {
+    if (id === userSubject.value?.id) {
         logout();
     }
 }

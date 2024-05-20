@@ -15,7 +15,8 @@ function jwtMiddleware(req, res) {
             '/api/users/authenticate',
             /^\/api\/users\/password\/.*/,
             /^\/api\/users\/id\/.*/,
-            /^\/api\/users\/.*/
+            /^\/api\/users\/.*/,
+            /^\/api\/subscriptions\/.*/,
         ]
     });
 

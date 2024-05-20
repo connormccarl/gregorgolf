@@ -26,7 +26,7 @@ async function getByMember(member) {
 }
 
 async function addEvent(event) {
-    await fetchWrapper.post(`${baseUrl}/add`, event);
+    return await fetchWrapper.post(`${baseUrl}/add`, event);
 }
 
 async function getByDate(date) { 
