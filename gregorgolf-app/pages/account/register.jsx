@@ -36,8 +36,7 @@ function Register() {
     const onSubmit = async (user) => {
         return userService.register(user)
             .then(() => {
-                alertService.success('Registration successful', true);
-                router.push('/account/login');
+                router.push('/account/login?registered=true');
             })
             .catch(alertService.error);
     }

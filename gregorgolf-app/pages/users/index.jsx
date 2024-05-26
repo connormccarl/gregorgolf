@@ -70,7 +70,6 @@ function Index() {
         userService.getAll().then(x => {
             setData(modifyData(x));
             setSortedData(modifyData(x));
-            console.log("user: ", x);
         });
     }, []);
 
@@ -85,6 +84,9 @@ function Index() {
         newRow.email = row.email.toString();
         newRow.membership = row.membership?.toString();
         newRow.accountStatus = row.accountStatus.toString();
+        newRow.subscriptionStatus = row.subscriptionStatus.toString();
+        newRow.subscriptionDate = row.subscriptionDate ? moment(row.subscriptionDate).calendar() : '';
+        newRow.subscriptionFrequency = row.subscriptionFrequency?.toString();
         newRow.createdAt = moment(row.createdAt).calendar();
 
         return newRow;
@@ -117,8 +119,27 @@ function Index() {
     // update membership type (user/admin)
     const updateMembership = async (id, membership) => {
         alertService.clear();
-        await userService.update(id, { membership: membership });
-        alertService.success("Membership updated");
+
+        // set account and subscription status depending on role change
+        let account;
+        let subscription;
+        let subscriptionDate;
+        if(membership === 'admin'){
+          account = 'active';
+          subscription = 'active';
+        } else {
+          account = 'active';
+          subscription = 'inactive';
+        }
+
+        await userService.update(id, { membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null });
+        
+        userService.getAll().then(x => {
+          setData(modifyData(x));
+          setSortedData(modifyData(x));
+      });
+
+        alertService.success("Membership updated", true);
     }
 
     // update account status (pending/active)
@@ -163,56 +184,56 @@ function Index() {
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('createdAt')}
                         >
-                        Created At
+                          Created At
                         </Th>
                         <Th
                         sorted={sortBy === 'name'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('name')}
                         >
-                        Name
+                          Name
                         </Th>
                         <Th
                         sorted={sortBy === 'email'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('email')}
                         >
-                        Email
+                          Email
                         </Th>
                         <Th
                         sorted={sortBy === 'membership'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('membership')}
                         >
-                        Membership
+                          Membership
                         </Th>
                         <Th
                         sorted={sortBy === 'accountStatus'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('accountStatus')}
                         >
-                        Account Status
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'subscriptionDate'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('subscriptionDate')}
-                        >
-                        Subscription Date
+                          Account Status
                         </Th>
                         <Th
                         sorted={sortBy === 'subscriptionStatus'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('subscriptionStatus')}
                         >
-                        Subscription Status
+                          Subscription Status
+                        </Th>
+                        <Th
+                        sorted={sortBy === 'subscriptionDate'}
+                        reversed={reverseSortDirection}
+                        onSort={() => setSorting('subscriptionDate')}
+                        >
+                          Subscription Date
                         </Th>
                         <Th
                         sorted={sortBy === 'subscriptionRenewal'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('subscriptionRenewal')}
                         >
-                        Subscription Renewal
+                          Subscription Plan
                         </Th>
                     </Table.Tr>
                 </Table.Tbody>
@@ -245,26 +266,28 @@ function Index() {
                                 />
                               </Table.Td>
                               <Table.Td>
-                                <Select
-                                  data={[{ value: 'pending', label: 'Pending'}, { value: 'active', 'label': 'Active' }]}
-                                  defaultValue={user.accountStatus}
-                                  style={{width: '8em'}}
-                                  onChange={(value, option) => updateAccountStatus(user.id, value)}
-                                />
+                                { user.membership === 'admin' ?
+                                    user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1)
+                                    :
+                                    <Select
+                                      data={[{ value: 'pending', label: 'Pending'}, { value: 'active', 'label': 'Active' }]}
+                                      defaultValue={user.accountStatus}
+                                      style={{width: '8em'}}
+                                      onChange={(value, option) => updateAccountStatus(user.id, value)}
+                                    />
+                                }
+                              </Table.Td>
+                              <Table.Td>
+                                { user.subscriptionStatus === 'active' ? 'Active' : 'Inactive' }
                               </Table.Td>
                               <Table.Td>
                                 <Text>
-                                  Subscription Date
+                                  {user.subscriptionDate}
                                 </Text>
                               </Table.Td>
                               <Table.Td>
                                 <Text>
-                                  Subscription Status
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  Subscription Renewal
+                                  { user.subscriptionFrequency && (user.subscriptionFrequency === 'month' ? 'Monthly' : 'Yearly') }
                                 </Text>
                               </Table.Td>
                               <Table.Td>

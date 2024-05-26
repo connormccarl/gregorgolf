@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
 import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
@@ -33,6 +34,7 @@ const stripePromise = loadStripe(
 );
 
 export default function Calendar({ events: data }) {
+    const router = useRouter();
     // calendar view fields
     const [date, setDate] = useState(getCurrentDay());
     const [view, setView] = useState('Both');
@@ -81,31 +83,46 @@ export default function Calendar({ events: data }) {
     const [endTimes, setEndTimes] = useState([]);
 
     // page fields
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(userService.userValue);
     const [bookingMember, setBookingMember] = useState(null);
 
+    /*
     useEffect(() => {
         console.log("master page events: ", events);
         console.log("master timeslots: ", timeslots);
     })
+    */
 
     // Check to see if this is a redirect back from Stripe Checkout
     useEffect(() => {
         const query = new URLSearchParams(window.location.search);
 
-        // success so just display confirmation
-        if (query.get('success')) {
-            alert('Event Added!');
+        // subscription activated
+        if(query.get('activated')){
+            alert("Subscription activated.");
         }
 
-        // failure so delete the event from the database
-        if (query.get('canceled')) {
+        // event payment success
+        if(query.get('success')) {
+            const eventId = query.get('event');
+            const sessionId = query.get('session_id');
+
+            eventService.update(eventId, { payment: 'paid', sessionId: sessionId })
+                .then(() => {
+                    alert("Event added.")
+                    router.push('/');
+                });
+        }
+
+        // event payment canceled so delete the event from the database
+        if(query.get('canceled')) {
             const eventId = query.get('event');
 
             // delete event
-            eventService.delete(eventId);
-
-            alert('Event not added. Please try again and complete the payment.');
+            eventService.delete(eventId)
+                .then(
+                    alert('Event not added. Please try again and complete the payment.')
+                );
         }
     }, [])
 
@@ -167,7 +184,7 @@ export default function Calendar({ events: data }) {
         // calculate effective times
         currEvents = calcEffectiveTimes(currEvents, bookingDate);
 
-        console.log("current events: ", currEvents);
+        //console.log("current events: ", currEvents);
 
         // update timeslots based on current events
         await currEvents.forEach((event) => {
@@ -213,7 +230,7 @@ export default function Calendar({ events: data }) {
                 }
         }));
         
-        console.log("current timeslots: ", currTimeslots);
+        //console.log("current timeslots: ", currTimeslots);
         // set timeslots for booking
         await setTimeslots(currTimeslots);
 
@@ -271,8 +288,8 @@ export default function Calendar({ events: data }) {
         }
     };
 
+    // useEffect first load
     useEffect(() => {
-        console.log("entering useEffect first load");
         // populate members list for book a slot for a member
         userService.getAll().then(x => {
             setMembers(x.map((member) => { 
@@ -289,7 +306,6 @@ export default function Calendar({ events: data }) {
         setUser(userService.userValue);
 
         // set events to parameter data
-        console.log("parameter events: ", data);
         setEvents(data);
 
         // update booked timeslots
@@ -433,7 +449,7 @@ export default function Calendar({ events: data }) {
             }
         }
 
-        console.log("workingTimeslots: ", workingTimeslots);
+        //console.log("workingTimeslots: ", workingTimeslots);
 
         setStartTimes(workingTimeslots.map(timeslot => {
             const listItem = {};
@@ -510,6 +526,12 @@ export default function Calendar({ events: data }) {
         setTimeslots([...currTimeslots]);
     };
 
+    // populate other member when admin books for another member
+    const setOtherMember = async (memberId) => {
+        setBookingMemberId(memberId);
+        setBookingMember(await userService.getById(memberId));
+    };
+
     const addEvent = async () => {
         if(bookingFor === 'other' && isNull(bookingMemberId)){
             alert("Please select a member to book a slot for.");
@@ -518,47 +540,72 @@ export default function Calendar({ events: data }) {
         if (isNull(startTime) || isNull(endTime)) {
             alert ("Please select a start/end time.");
         }
-        
-        if(bookingFor === 'other') {
-            setBookingMember(await userService.getById(bookingMemberId));
-        }
 
+        // only add event if all required fields are populated
         if((bookingFor === 'self' || !isNull(bookingMemberId)) && !isNull(startTime) && !isNull(endTime)){
-        
-        console.log("date: ", bookingDate);
 
-        // build event
-        const event = {
-            bay: parseInt(bookingBay),
-            members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
-            guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
-            hours: parseInt(playingTime),
-            date: bookingDate,
-            startTime: new Date(startTime),
-            endTime: new Date(endTime),
-        };
+            // build event
+            const event = {
+                bay: parseInt(bookingBay),
+                members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
+                guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
+                hours: parseInt(playingTime),
+                date: bookingDate,
+                startTime: new Date(startTime),
+                endTime: new Date(endTime),
+                payment: 'none',
+            };
 
-        // add event to current view (bypass a data refresh)
-        if(bookingDate.getTime() === date.getTime() || new Date(endTime).toDateString() == date.toDateString()){
-            await addEventToDisplay(event);
+            // add event to current view (bypass a data refresh)
+            if(bookingDate.getTime() === date.getTime() || new Date(endTime).toDateString() == date.toDateString()){
+                await addEventToDisplay(event);
+            }
+
+            // add event to database
+            let createdEventId = await eventService.addEvent(event);
+
+            //console.log("created Event Id: ", createdEventId);
+
+            close();
+            resetBookingFields();
+
+            // process payment
+            let priceId = '0';
+            if(playingTime == '1'){
+                if(bookingPlayers == '2'){
+                    priceId = 'price_1PGOs6LcjY6vEoOvTeJZBYdl' // TEST: price_1PGOs6LcjY6vEoOvTeJZBYdl, LIVE: price_1PGOBwLcjY6vEoOvDlvcNDZn
+                }
+            } else if(playingTime == '2'){
+                if(bookingPlayers == '2'){
+                    priceId = 'price_1PGOCULcjY6vEoOvlrTdXOku';
+                } else if(bookingPlayers == '3'){
+                    priceId = 'price_1PGOCmLcjY6vEoOvIG7332Wp';
+                } else if(bookingPlayers == '4'){
+                    priceId = 'price_1PGODALcjY6vEoOv9xLJjlov';
+                }
+            } else {
+                if(bookingPlayers == '2'){
+                    priceId = 'price_1PGODhLcjY6vEoOvsiQTUCTf';
+                } else if(bookingPlayers == '3'){
+                    priceId = 'price_1PGODxLcjY6vEoOvCZPBmACt';
+                } else if(bookingPlayers == '4'){
+                    priceId = 'price_1PGOEELcjY6vEoOvOgY2wdcu';
+                }
+            }
+
+            // bill only if required
+            if(priceId !== '0'){
+                const customerId = bookingFor === 'self' ? user.customerId : bookingMember.customerId;
+
+                subscriptionService
+                    .processEvent(customerId, priceId, "payment", createdEventId)
+                    .then((x) => {
+                        window.location.assign(x);
+                    });
+            } else {
+                alert("Event created.");
+            }
         }
-
-        // add event to database
-        let createdEventId = await eventService.addEvent(event);
-
-        //console.log("created Event Id: ", createdEventId);
-
-        close();
-        resetBookingFields();
-
-        // process payment
-        subscriptionService
-            .processEvent("price_1PGOrtLcjY6vEoOvQYGI8nNF", "subscription", createdEventId)
-            .then((x) => {
-                window.location.assign(x);
-            });
-        
-       }
     };
 
     const processPayment = async (e) => {
@@ -601,23 +648,26 @@ export default function Calendar({ events: data }) {
                     value={bookingDate}
                     onChange={setBookingDate}
                 />
-
-                <Text size="sm" fw={500}>Whom are you booking for?</Text>
-                <SegmentedControl
-                    value={bookingFor}
-                    onChange={setBookingFor}
-                    data={[
-                        { label: 'Book for Yourself', value: 'self' },
-                        { label: 'Book for Member', value: 'other' }
-                    ]}
-                    color="var(--mantine-color-light-green-6)"
-                />
+                { user.membership === 'admin' && 
+                <>
+                    <Text size="sm" fw={500}>Whom are you booking for?</Text>
+                    <SegmentedControl
+                        value={bookingFor}
+                        onChange={setBookingFor}
+                        data={[
+                            { label: 'Book for Yourself', value: 'self' },
+                            { label: 'Book for Member', value: 'other' }
+                        ]}
+                        color="var(--mantine-color-light-green-6)"
+                    />
+                </>
+                }
 
                 <Stack className={`${ bookingFor === 'other' ? '' : 'd-none'}`}>
                     <Text size="sm" fw={500}>Select Member</Text>
                     <Select
                         value={bookingMemberId}
-                        onChange={setBookingMemberId}
+                        onChange={setOtherMember}
                         placeholder='Member Name'
                         limit={10}
                         data={members}
@@ -689,9 +739,6 @@ export default function Calendar({ events: data }) {
         </Modal>
         <div className={classes.menuBar}>
             <Group justify='space-between' className={classes.menuGroup}>
-                <Button onClick={processPayment} color="var(--mantine-color-light-green-6)">
-                    Pay
-                </Button>
                 <Button onClick={() => {
                     setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
                     open();

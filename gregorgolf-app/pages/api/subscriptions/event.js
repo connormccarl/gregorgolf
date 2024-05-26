@@ -6,17 +6,14 @@ export default apiHandler({
     post: payment
 });
 
-async function payment(req, res) {
-    
-    //return res.status(200).json({});
-    
+async function payment(req, res) {    
     try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        const { priceId, type, eventId } = await req.body;
-        //console.log(priceId, type);
+        const { customerId, priceId, type, eventId } = await req.body;
 
-        // Create Checkout Sessions from body params.
+        // Create Checkout Sessions from body params
         const session = await stripe.checkout.sessions.create({
+            customer: customerId,
             line_items: [
             {
                 // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
@@ -25,7 +22,7 @@ async function payment(req, res) {
             },
             ],
             mode: type,
-            success_url: `${req.headers.origin}/?success=true`,
+            success_url: `${req.headers.origin}/?success=true&event=${eventId}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${req.headers.origin}/?canceled=true&event=${eventId}`,
             automatic_tax: {enabled: true},
         });

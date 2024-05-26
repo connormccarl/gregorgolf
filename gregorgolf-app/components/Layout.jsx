@@ -7,6 +7,7 @@ import {
   IconListDetails,
   IconUsers,
   IconLogout,
+  IconCreditCardPay
 } from '@tabler/icons-react';
 import { Logo } from './Logo';
 import { useDisclosure } from '@mantine/hooks';
@@ -18,6 +19,8 @@ import { NavLink } from '.';
 import classes from './Layout.module.css';
 
 const data = [
+  { link: '#', label: 'Account', role: 'pending' },
+  { link: '/subscription', label: 'Activate Subscription', icon: IconCreditCardPay, role: 'pending' },
   { link: '#', label: 'Dashboard', role: 'user' },
   { link: '/', label: 'Booking Calendar', icon: IconGolf, role: 'user' },
   { link: '/bookings', label: 'My Bookings', icon: IconCalendarEvent, role: 'user' },
@@ -32,8 +35,12 @@ export function Layout({children}) {
   const [active, setActive] = useState(router.pathname);
   const [opened, { toggle, close }] = useDisclosure();
 
+  useEffect(() => {
+    setUser(userService.userValue);
+  }, []);
+
   // only display the correct links based on role
-  const links = data.filter((link) => user.membership === 'admin' ? true : (user.membership === link.role)).map((item) => item.link === '#' ? 
+  const links = data.filter((link) => (user.accountStatus === 'active' && user.subscriptionStatus === 'inactive') ? link.role === 'pending' : (user.membership === 'admin' ? (link.role === 'admin' || link.role === 'user') : (user.membership === link.role))).map((item) => item.link === '#' ? 
     (
       <h5 className={classes.title} key={item.label}>{item.label}</h5>
     )

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 import { userService } from 'services';
-import { Nav, Alert } from 'components';
 
 // css files
 import '@mantine/core/styles.css'
@@ -51,6 +50,8 @@ function App({ Component, pageProps }) {
     // redirect to login page if accessing a private page and not logged in 
     const publicPaths = ['/account/login', '/account/register', '/account/password/reset', '/account/password/[id]'];
     const adminPaths = ['/admin/bookings', '/users'];
+    const userPaths = ['/','/bookings'];
+    const subscriptionPaths = ['/subscription'];
     const path = url.split('?')[0];
 
     // block access if not logged in AND not a public path
@@ -60,9 +61,15 @@ function App({ Component, pageProps }) {
     } else {
         setAuthorized(true);
 
-        // block access if not admin and trying to access admin path
-        if((userService.userValue && userService.userValue.membership === 'user') && adminPaths.includes(path)){
-          router.push('/');
+        // block access if pending account OR not admin and trying to access admin path
+        if(userService.userValue){
+          if(userService.userValue.subscriptionStatus === 'inactive' && (userPaths.includes(path) || adminPaths.includes(path))){
+            router.push('/subscription');
+          } else if(userService.userValue.membership === 'user' && adminPaths.includes(path)){
+            router.push('/');
+          } else if(userService.userValue.subscriptionStatus === 'active' && subscriptionPaths.includes(path)){
+            router.push('/');
+          }
         }
         
     }

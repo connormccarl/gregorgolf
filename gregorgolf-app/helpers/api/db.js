@@ -29,7 +29,10 @@ function userModel() {
         photo: { type: String },
         membership: { type: String },
         accountStatus: { type: String },
-        subscriptionStatus: { type: String }
+        subscriptionStatus: { type: String },
+        customerId: { type: String },
+        subscriptionDate: { type: Date },
+        subscriptionFrequency: { type: String },
     }, {
         // add createdAt and updatedAt timestamps
         timestamps: true
@@ -53,9 +56,10 @@ function eventModel() {
         members: { type: Array, required: true },
         guests: { type: Number, required: true },
         hours: { type: Number, required: true },
-        date: { type: Date, required: true },
         startTime: { type: Date, required: true },
         endTime: { type: Date, required: true },
+        payment: { type: String },
+        paymentId: { type: String }
     }, {
         // add createdAt and updatedAt timestamps
         timestamps: true

@@ -124,13 +124,13 @@ function Index() {
         );
     }
 
-    function deleteUser(id) {
-        setData(data.map(x => {
+    function deleteEvent(id) {
+        setSortedData(sortedData.map(x => {
             if (x.id === id) { x.isDeleting = true; }
             return x;
         }));
         eventService.delete(id).then(() => {
-            setData(data => data.filter(x => x.id !== id));
+            setSortedData(sortedData => sortedData.filter(x => x.id !== id));
         });
     }
 
@@ -282,7 +282,7 @@ function Index() {
                               </Table.Td>
                               <Table.Td>
                                 <Group gap={0} justify="flex-end">
-                                    <button onClick={() => deleteUser(event.id)} className="btn btn-sm btn-danger btn-delete-user" style={{ width: '60px' }} disabled={event.isDeleting}>
+                                    <button onClick={() => deleteEvent(event.id)} className="btn btn-sm btn-danger btn-delete-user" style={{ width: '60px' }} disabled={event.isDeleting}>
                                         {event.isDeleting
                                             ? <span className="spinner-border spinner-border-sm"></span>
                                             : <span>Delete</span>

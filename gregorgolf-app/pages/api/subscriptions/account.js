@@ -1,4 +1,4 @@
-import { apiHandler } from 'helpers/api';
+import { apiHandler, usersRepo } from 'helpers/api';
 
 import Stripe from 'stripe';
 
@@ -7,12 +7,12 @@ export default apiHandler({
 });
 
 async function payment(req, res) {
-    
     try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         const { yearly, userId } = await req.body;
         //console.log("yearly: ", yearly);
 
+        // set the subscription to monthly or yearly
         let priceId;
         if(yearly){
             priceId = 'price_1PH7RxLcjY6vEoOvq5CcqmSl';
@@ -20,8 +20,11 @@ async function payment(req, res) {
             priceId = 'price_1PGOrtLcjY6vEoOvQYGI8nNF';
         }
 
-        // Create Checkout Sessions from body params.
-        const session = await stripe.checkout.sessions.create({
+        // get start of billing for prorated first month
+        let billingStart = new Date();
+        billingStart.setMonth(billingStart.getMonth() + 1, 1);
+
+        const checkoutBody = {
             line_items: [
             {
                 // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
@@ -30,10 +33,16 @@ async function payment(req, res) {
             },
             ],
             mode: 'subscription',
-            success_url: `${req.headers.origin}/account/login/?success=true&user=${userId}&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin}/account/register/?canceled=true&user=${userId}`,
+            success_url: `${req.headers.origin}/subscription/?success=true&user=${userId}&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin}/subscription/?canceled=true`,
             automatic_tax: {enabled: true},
-        });
+            subscription_data: {
+                billing_cycle_anchor: Math.floor(billingStart.getTime()/1000),
+            },
+        };
+
+        // Create Checkout Sessions from body params.
+        const session = await stripe.checkout.sessions.create(checkoutBody);
 
         return res.status(200).json(session.url);
 

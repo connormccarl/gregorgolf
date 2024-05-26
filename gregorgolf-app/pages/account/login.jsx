@@ -13,32 +13,20 @@ import { userService, alertService } from 'services';
 import { Alert } from '@/components';
 
 import classes from './Login.module.css';
-import { subscriptionService } from '@/services';
 
 export default Login;
 
 function Login() {
     const router = useRouter();
 
-    // Check to see if this is a redirect back from Stripe Checkout
     useEffect(() => {
-        handleStripeCheckoutSuccess();
-    }, [])
-
-    // handle what happens when Stripe payment for new account creation is successful
-    const handleStripeCheckoutSuccess = async () => {
         const query = new URLSearchParams(window.location.search);
 
-        // success so just display confirmation
-        if (query.get('success')) {
-            const userId = query.get('user');
-            const sessionId = query.get('session_id');
-
-            subscriptionService.updateAccount(userId, sessionId);
-
-            alertService.success('Registration successful. You can login now.', true);
+        // redirected from registration
+        if (query.get('registered')) {
+            alertService.success("Registered. You can login once your account is approved.", true);
         }
-    }
+    },[])
 
     // form validation rules 
     const validationSchema = Yup.object().shape({
@@ -56,7 +44,7 @@ function Login() {
         return userService.login(email, password)
             .then(() => {
                 // get return url from query parameters or default to '/'
-                const returnUrl = router.query.returnUrl || '/';
+                const returnUrl = router.query.returnUrl || userService.userValue.accountStatus === 'pending' ? '/subscription' : '/';
                 router.push(returnUrl);
             })
             .catch(alertService.error);

@@ -11,16 +11,20 @@ async function update(req, res) {
         // get subscription details from stripe
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         const session = await stripe.checkout.sessions.retrieve(req.body);
-        const customer = await stripe.customers.retrieve(session.customer);
+        const subscription = await stripe.subscriptions.retrieve(session.subscription);
+        
+        //console.log("stripe sub: ", subscription);
 
-        console.log('session: ', session);
-        console.log('customer: ', customer);
+        const customerId = session.customer;
+        const subscriptionDate = new Date(subscription.created * 1000);
+        const subscriptionFrequency = subscription.plan.interval;
+        
+        //console.log("subscription date: ", subscriptionDate);
         
         // update user record with subscription info
+        await usersRepo.activateSubscription(req.query.userId, customerId, subscriptionDate, subscriptionFrequency);
         
-        //await usersRepo.updateSubscription(req.query.userId, req.body);
-        
-        return res.status(200).json({});
+        return res.status(200).json(customerId);
     } catch (err) {
         return res.status(err.statusCode || 500).json(err.message);
     }

@@ -8,6 +8,7 @@ export const eventsRepo = {
     getByDate,
     getNextByDate,
     getByMember,
+    update,
     delete: _delete
 };
 
@@ -73,6 +74,18 @@ async function getNextByDate(date) {
             }}
         ]
     });
+}
+
+async function update(id, params) {
+    const event = await Event.findById(id);
+
+    // validate
+    if (!event) throw 'Event not found';
+
+    // copy params properties to event
+    Object.assign(event, params);
+
+    await event.save();
 }
 
 async function _delete(id) {

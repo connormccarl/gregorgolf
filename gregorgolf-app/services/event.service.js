@@ -14,6 +14,7 @@ export const eventService = {
     getNextDayAvailability,
     getAll,
     getByMember,
+    update,
     delete: _delete
 };
 
@@ -104,6 +105,10 @@ async function getNextDayAvailability(date){
 
      //return events_json;
      return await fetchWrapper.get(`${baseUrl}/next/${currDate}`);
+}
+
+async function update(id, params) {
+    await fetchWrapper.put(`${baseUrl}/id/${id}`, params);
 }
 
 // prefixed with underscored because delete is a reserved word in javascript
