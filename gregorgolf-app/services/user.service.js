@@ -79,6 +79,11 @@ async function update(id, params) {
 
         // publish updated user to subscribers
         userSubject.next(user);
+
+        // hard reload page if admin user changes themselves to a user (disables access)
+        if(params.membership && params.membership === 'user'){
+            window.location.href = '/';
+        }
     }
 }
 

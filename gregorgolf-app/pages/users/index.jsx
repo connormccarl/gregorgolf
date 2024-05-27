@@ -133,10 +133,20 @@ function Index() {
 
         await userService.update(id, { membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null });
         
-        userService.getAll().then(x => {
-          setData(modifyData(x));
-          setSortedData(modifyData(x));
-      });
+        setData(data => data.map(item => {
+          if(item.id === id){
+            return { ...item, membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
+        setSortedData(sortedData => sortedData.map(item => {
+          if(item.id === id){
+            return { ...item, membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
 
         alertService.success("Membership updated", true);
     }
@@ -157,6 +167,8 @@ function Index() {
         setData(data => data.map(item => {
           if(item.id === id){
             return { ...item, subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
           }
         }));
         setSortedData(sortedData => sortedData.map(item => {
