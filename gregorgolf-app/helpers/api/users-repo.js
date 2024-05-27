@@ -121,6 +121,13 @@ async function update(id, params) {
         params.hash = bcrypt.hashSync(params.password, 10);
     }
 
+    // cancel subscription in Stripe if subscriptionStatus set to inactive or user made admin
+    if((params.subscriptionStatus && params.subscriptionStatus === 'inactive') || (params.membership && params.membership === 'admin' && user.subscriptionStatus === 'active')){
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        await stripe.subscriptions.cancel(user.subscriptionId);
+        params.subscriptionId = null;
+    }
+
     // copy params properties to user
     Object.assign(user, params);
 
@@ -156,7 +163,7 @@ async function updatePassword(email, params) {
     await user.save();
 }
 
-async function activateSubscription(userId, customerId, subscriptionDate, subscriptionFrequency) {
+async function activateSubscription(userId, customerId, subscriptionId, subscriptionDate, subscriptionFrequency) {
     const user = await User.findById(userId);
 
     // validate
@@ -166,6 +173,7 @@ async function activateSubscription(userId, customerId, subscriptionDate, subscr
     params.accountStatus = 'active';
     params.subscriptionStatus = 'active';
     params.customerId = customerId;
+    params.subscriptionId = subscriptionId;
     params.subscriptionDate = subscriptionDate;
     params.subscriptionFrequency = subscriptionFrequency;
 

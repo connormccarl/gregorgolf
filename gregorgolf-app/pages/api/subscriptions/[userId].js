@@ -16,13 +16,14 @@ async function update(req, res) {
         //console.log("stripe sub: ", subscription);
 
         const customerId = session.customer;
+        const subscriptionId = subscription.id;
         const subscriptionDate = new Date(subscription.created * 1000);
         const subscriptionFrequency = subscription.plan.interval;
         
         //console.log("subscription date: ", subscriptionDate);
         
         // update user record with subscription info
-        await usersRepo.activateSubscription(req.query.userId, customerId, subscriptionDate, subscriptionFrequency);
+        await usersRepo.activateSubscription(req.query.userId, customerId, subscriptionId, subscriptionDate, subscriptionFrequency);
         
         return res.status(200).json(customerId);
     } catch (err) {

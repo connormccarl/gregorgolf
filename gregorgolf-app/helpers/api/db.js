@@ -31,6 +31,7 @@ function userModel() {
         accountStatus: { type: String },
         subscriptionStatus: { type: String },
         customerId: { type: String },
+        subscriptionId: { type: String },
         subscriptionDate: { type: Date },
         subscriptionFrequency: { type: String },
     }, {

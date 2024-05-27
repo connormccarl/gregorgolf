@@ -9,15 +9,19 @@ export default apiHandler({
 async function payment(req, res) {
     try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        const { yearly, userId } = await req.body;
+        const { yearly, userId, discount } = await req.body;
         //console.log("yearly: ", yearly);
 
         // set the subscription to monthly or yearly
         let priceId;
-        if(yearly){
-            priceId = 'price_1PH7RxLcjY6vEoOvq5CcqmSl';
+        if(discount){
+            priceId = 'price_1PL8oqLcjY6vEoOvS6T6fj27';
         } else {
-            priceId = 'price_1PGOrtLcjY6vEoOvQYGI8nNF';
+            if(yearly){
+                priceId = 'price_1PH7RxLcjY6vEoOvq5CcqmSl';
+            } else {
+                priceId = 'price_1PGOrtLcjY6vEoOvQYGI8nNF';
+            }
         }
 
         // get start of billing for prorated first month
@@ -40,6 +44,12 @@ async function payment(req, res) {
                 billing_cycle_anchor: Math.floor(billingStart.getTime()/1000),
             },
         };
+
+        // if the customer already exists in Stripe use it (for cancelled then readded subscriptions)
+        const user = await usersRepo.getById(userId);
+        if(user.customerId){
+            checkoutBody.customer = user.customerId;
+        }
 
         // Create Checkout Sessions from body params.
         const session = await stripe.checkout.sessions.create(checkoutBody);

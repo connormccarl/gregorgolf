@@ -14,8 +14,8 @@ async function processEvent(customerId, priceId, type, eventId) {
     return await fetchWrapper.post(`${baseUrl}/event`, { customerId, priceId, type, eventId });
 }
 
-async function processAccount(yearly, userId) {
-    return await fetchWrapper.post(`${baseUrl}/account`, { yearly, userId });
+async function processAccount(yearly, userId, discount) {
+    return await fetchWrapper.post(`${baseUrl}/account`, { yearly, userId, discount });
 }
 
 async function activateAccount(userId, sessionId){

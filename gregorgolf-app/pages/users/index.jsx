@@ -123,7 +123,6 @@ function Index() {
         // set account and subscription status depending on role change
         let account;
         let subscription;
-        let subscriptionDate;
         if(membership === 'admin'){
           account = 'active';
           subscription = 'active';
@@ -147,6 +146,28 @@ function Index() {
       alertService.clear();
       await userService.update(id, { accountStatus: status });
       alertService.success("Account Status updated");
+    }
+
+    // update account status (pending/active)
+    const updateSubscriptionStatus = async (id, status) => {
+      alertService.clear();
+      if(status === 'inactive'){
+        await userService.update(id, { subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null });
+        
+        setData(data => data.map(item => {
+          if(item.id === id){
+            return { ...item, subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null };
+          }
+        }));
+        setSortedData(sortedData => sortedData.map(item => {
+          if(item.id === id){
+            return { ...item, subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
+      }
+      alertService.success("Subscription Status updated");
     }
 
     const exportData = () => {
@@ -278,7 +299,17 @@ function Index() {
                                 }
                               </Table.Td>
                               <Table.Td>
-                                { user.subscriptionStatus === 'active' ? 'Active' : 'Inactive' }
+                                { user.membership === 'admin' ?
+                                    user.subscriptionStatus === 'active' ? 'Active' : 'Inactive' 
+                                    :
+                                    <Select
+                                      data={[{ value: 'active', label: 'Active'}, { value: 'inactive', 'label': 'Inactive' }]}
+                                      defaultValue={user.subscriptionStatus}
+                                      style={{width: '8em'}}
+                                      onChange={(value, option) => updateSubscriptionStatus(user.id, value)}
+                                      disabled={user.subscriptionStatus === 'inactive' ? true : false}
+                                    />
+                                }
                               </Table.Td>
                               <Table.Td>
                                 <Text>

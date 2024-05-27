@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Checkbox, Button, Group, Center, Stack, Loader } from '@mantine/core';
+import { Checkbox, Button, Group, Center, Stack, Loader, TextInput } from '@mantine/core';
 
 import { Layout } from '@/components';
 import Subscription from '@/components/Subscription';
@@ -11,6 +11,7 @@ export default function index() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [yearly, setYearly]  = useState(false);
+    const [code, setCode] = useState(null);
 
      // Check to see if this is a redirect back from Stripe Checkout
      useEffect(() => {
@@ -38,9 +39,16 @@ export default function index() {
     const processPayment = () => {
         setLoading(true);
 
+        let discount;
+        if(code === 'GREGORFRIEND'){
+            discount = true;
+        } else {
+            discount = false;
+        }
+
         // process payment
         subscriptionService
-            .processAccount(yearly, userService.userValue.id)
+            .processAccount(yearly, userService.userValue.id, discount)
             .then((x) => {
                 window.location.assign(x);
             });
@@ -55,6 +63,7 @@ export default function index() {
                     {loading && <span className="spinner-border spinner-border-sm me-1"></span>}
                     Pay
                 </Button>
+                <TextInput placeholder="Discount Code" style={{ width: 150 }} value={code} onChange={(event) => setCode(event.currentTarget.value)} />
                 <Checkbox size="sm" label="Yearly Subscription (save 20%)" checked={yearly} onChange={(event) => setYearly(event.currentTarget.checked)} />
             </Group>
         </Stack>
