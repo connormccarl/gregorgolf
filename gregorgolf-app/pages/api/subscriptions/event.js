@@ -9,7 +9,7 @@ export default apiHandler({
 async function payment(req, res) {    
     try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        const { customerId, priceId, type, eventId } = await req.body;
+        const { customerId, priceId, type, eventId, join, guests } = await req.body;
 
         // Create Checkout Sessions from body params
         const session = await stripe.checkout.sessions.create({
@@ -22,8 +22,8 @@ async function payment(req, res) {
             },
             ],
             mode: type,
-            success_url: `${req.headers.origin}/?success=true&event=${eventId}&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin}/?canceled=true&event=${eventId}`,
+            success_url: `${req.headers.origin}/?success=true&event=${eventId}&session_id={CHECKOUT_SESSION_ID}&join=${join}`,
+            cancel_url: `${req.headers.origin}/?canceled=true&event=${eventId}&join=${join}&guests=${guests}`,
             automatic_tax: {enabled: true},
         });
 

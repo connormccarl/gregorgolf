@@ -5,15 +5,13 @@ import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-r
 import { DatePickerInput } from '@mantine/dates';
 import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useForm } from '@mantine/form';
 
-import { alertService, userService, eventService, subscriptionService } from 'services';
+import { userService, eventService, subscriptionService } from 'services';
 
 import { loadStripe } from '@stripe/stripe-js';
 
 import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
-import { from } from 'rxjs';
 
 const printTime = (timeslot) => {
     const time = timeslot.split(' ')[0];
@@ -64,6 +62,11 @@ export default function Calendar({ events: data }) {
     const [events, setEvents] = useState(null);
     const [timeslots, setTimeslots] = useState(timeslots_json);
 
+    // join event control
+    const [join, setJoin] = useState(false);
+    const [joinEventId, setJoinEventId] = useState('');
+    const [joinEventPeople, setJoinEventPeople] = useState(0);
+    
     // book a slot fields
     const [opened, { open, close }] = useDisclosure(false);
     const [bookingBay, setBookingBay] = useState('1');
@@ -109,7 +112,11 @@ export default function Calendar({ events: data }) {
 
             eventService.update(eventId, { payment: 'paid', sessionId: sessionId })
                 .then(() => {
-                    alert("Event added.")
+                    if(query.get('join')){
+                        alert("Slot updated.");
+                    } else {
+                        alert("Slot added.");
+                    }
                     router.push('/');
                 });
         }
@@ -118,13 +125,23 @@ export default function Calendar({ events: data }) {
         if(query.get('canceled')) {
             const eventId = query.get('event');
 
-            // delete event
-            eventService.delete(eventId)
-                .then(
-                    alert('Event not added. Please try again and complete the payment.')
-                );
+            if(query.get('join')){
+                // remove event updates if join
+                eventService.update(eventId, { remove: query.get('guests') })
+                    .then(() => {
+                        alert('Slot not joined. Please complete the payment.');
+                        router.push('/');
+                    });
+            } else {
+                // delete event
+                eventService.delete(eventId)
+                    .then(() => {
+                        alert('Slot not added. Please try again and complete the payment.');
+                        router.push('/');
+                    });
+            }
         }
-    }, [])
+    }, []);
 
     // update events based on date selection
     useEffect(() => {
@@ -362,43 +379,85 @@ export default function Calendar({ events: data }) {
         await updateBookedTimeslots(newEvent);
     };
 
+    // update select number of players data depending on what playing time is selected
     useEffect(() => {
-        if(playingTime == '1'){
-            setBookingPlayersData([
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $10', value: '2' }
-            ]);
-            if(bookingPlayers == '3' || bookingPlayers == '4'){
-                setBookingPlayers('2');
+        // set booking players data for new events
+        if(joinEventPeople == 0){
+            if(playingTime == '1'){
+                setBookingPlayersData([
+                    { label: 'Single Member', value: '1' },
+                    { label: 'Member with 1 Guest - $10', value: '2' }
+                ]);
+                if(bookingPlayers == '3' || bookingPlayers == '4'){
+                    setBookingPlayers('2');
+                }
+            } else if(playingTime == '2'){
+                setBookingPlayersData([
+                    { label: 'Single Member', value: '1' },
+                    { label: 'Member with 1 Guest - $20', value: '2' },
+                    { label: 'Member with 2 Guests - $35', value: '3' },
+                    { label: 'Member with 3 Guests - $45', value: '4' }
+                ]);
+            } else {
+                setBookingPlayersData([
+                    { label: 'Single Member', value: '1' },
+                    { label: 'Member with 1 Guest - $40', value: '2' },
+                    { label: 'Member with 2 Guests - $70', value: '3' },
+                    { label: 'Member with 3 Guests - $90', value: '4' }
+                ]);
             }
-        } else if(playingTime == '2'){
-            setBookingPlayersData([
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $20', value: '2' },
-                { label: 'Member with 2 Guests - $35', value: '3' },
-                { label: 'Member with 3 Guests - $45', value: '4' }
-            ]);
-        } else {
-            setBookingPlayersData([
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $40', value: '2' },
-                { label: 'Member with 2 Guests - $70', value: '3' },
-                { label: 'Member with 3 Guests - $90', value: '4' }
-            ]);
+        } else { // set booking players data for joined events
+            if(playingTime == '2'){
+                if(joinEventPeople == 1){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $20', value: '2' },
+                        { label: 'Member with 2 Guests - $35', value: '3' }
+                    ]);
+                } else if(joinEventPeople == 2){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $20', value: '2' }
+                    ]);
+                } else if(joinEventPeople == 3){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' }
+                    ]);
+                }
+            } else {
+                if(joinEventPeople == 1){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $40', value: '2' },
+                        { label: 'Member with 2 Guests - $70', value: '3' }
+                    ]);
+                } else if(joinEventPeople == 2){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $40', value: '2' }
+                    ]);
+                } else if(joinEventPeople == 3){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' }
+                    ]);
+                }
+            }
         }
     }, [playingTime]);
 
     
-    const getEventWidth = (numGuests) => {
-        switch(numGuests){
-            case 1:
-                return view === 'Both' ? classes.event2Two : classes.event2One;
-            case 2: 
-                return view === 'Both' ? classes.event3Two : classes.event3One;
-            case 3:
-                return view === 'Both' ? classes.event4Two : classes.event4One;
-            default: 
-                return view === 'Both' ? classes.event4Two : classes.event4One;
+    const getEventWidth = (hours, people) => {
+        if(hours == 1 || people == 4){
+            return view === 'Both' ? classes.event4Two : classes.event4One;
+        } else {
+            switch(people){
+                case 2:
+                    return view === 'Both' ? classes.event2Two : classes.event2One;
+                case 3: 
+                    return view === 'Both' ? classes.event3Two : classes.event3One;
+                default: 
+                    return view === 'Both' ? classes.event1Two : classes.event1One;
+            }
         }
     }
     
@@ -502,6 +561,9 @@ export default function Calendar({ events: data }) {
         ]);
         setStartTime(null);
         setEndTime(null);
+        setJoin(false);
+        setJoinEventId('');
+        setJoinEventPeople(0);
     };
 
     const updateBookedTimeslots = (newEvent) => {
@@ -543,7 +605,6 @@ export default function Calendar({ events: data }) {
 
         // only add event if all required fields are populated
         if((bookingFor === 'self' || !isNull(bookingMemberId)) && !isNull(startTime) && !isNull(endTime)){
-
             // build event
             const event = {
                 bay: parseInt(bookingBay),
@@ -555,14 +616,16 @@ export default function Calendar({ events: data }) {
                 endTime: new Date(endTime),
                 payment: 'none',
             };
+            
+            // add event to database
+            let createdEventId = await eventService.addEvent(event);
 
             // add event to current view (bypass a data refresh)
             if(bookingDate.getTime() === date.getTime() || new Date(endTime).toDateString() == date.toDateString()){
+                event.id = createdEventId;
                 await addEventToDisplay(event);
             }
 
-            // add event to database
-            let createdEventId = await eventService.addEvent(event);
 
             //console.log("created Event Id: ", createdEventId);
 
@@ -570,35 +633,13 @@ export default function Calendar({ events: data }) {
             resetBookingFields();
 
             // process payment
-            let priceId = '0';
-            if(playingTime == '1'){
-                if(bookingPlayers == '2'){
-                    priceId = 'price_1PGOs6LcjY6vEoOvTeJZBYdl' // TEST: price_1PGOs6LcjY6vEoOvTeJZBYdl, LIVE: price_1PGOBwLcjY6vEoOvDlvcNDZn
-                }
-            } else if(playingTime == '2'){
-                if(bookingPlayers == '2'){
-                    priceId = 'price_1PGOCULcjY6vEoOvlrTdXOku';
-                } else if(bookingPlayers == '3'){
-                    priceId = 'price_1PGOCmLcjY6vEoOvIG7332Wp';
-                } else if(bookingPlayers == '4'){
-                    priceId = 'price_1PGODALcjY6vEoOv9xLJjlov';
-                }
-            } else {
-                if(bookingPlayers == '2'){
-                    priceId = 'price_1PGODhLcjY6vEoOvsiQTUCTf';
-                } else if(bookingPlayers == '3'){
-                    priceId = 'price_1PGODxLcjY6vEoOvCZPBmACt';
-                } else if(bookingPlayers == '4'){
-                    priceId = 'price_1PGOEELcjY6vEoOvOgY2wdcu';
-                }
-            }
-
+            let priceId = getPriceId();
             // bill only if required
             if(priceId !== '0'){
                 const customerId = bookingFor === 'self' ? user.customerId : bookingMember.customerId;
 
                 subscriptionService
-                    .processEvent(customerId, priceId, "payment", createdEventId)
+                    .billForEvent(customerId, priceId, "payment", createdEventId, false, 0)
                     .then((x) => {
                         window.location.assign(x);
                     });
@@ -608,11 +649,82 @@ export default function Calendar({ events: data }) {
         }
     };
 
-    const processPayment = async (e) => {
-        e.preventDefault();
-        subscriptionService.getSubscriptionData()
-    }
-    
+    // handles updating an event when people join it
+    const joinEvent = async () => {
+        const update = {
+            member: { id: user.id, firstName: user.firstName, lastName: user.lastName },
+            guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
+        };
+
+        console.log("current event: ", joinEventId);
+
+        // update view
+        setEvents(events.map((event) => {
+            if(event.id === joinEventId){
+                return { ...event, members: [...event.members, update.member], guests: event.guests + parseInt(bookingPlayers) - 1 };
+            } else {
+                return { ...event };
+            }
+        }));
+
+        // update event in database
+        await eventService.update(joinEventId, update);
+
+        close();
+        resetBookingFields();
+
+        // process payment
+        let priceId = getPriceId();
+        // bill only if required
+        if(priceId !== '0'){
+            const customerId = user.customerId;
+
+            subscriptionService
+                .billForEvent(customerId, priceId, "payment", joinEventId, true, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1)
+                .then((x) => {
+                    window.location.assign(x);
+                });
+        } else {
+            alert("Event created.");
+        }
+    };
+
+    const getPriceId = () => {
+        let priceId = '0';
+        if(playingTime == '1'){
+            if(bookingPlayers == '2'){
+                priceId = 'price_1PGOs6LcjY6vEoOvTeJZBYdl' // TEST: price_1PGOs6LcjY6vEoOvTeJZBYdl, LIVE: price_1PGOBwLcjY6vEoOvDlvcNDZn
+            }
+        } else if(playingTime == '2'){
+            if(bookingPlayers == '2'){
+                priceId = 'price_1PLCd5LcjY6vEoOv65shHHWT'; // TEST: price_1PLCd5LcjY6vEoOv65shHHWT, LIVE: price_1PGOCULcjY6vEoOvlrTdXOku
+            } else if(bookingPlayers == '3'){
+                priceId = 'price_1PGOCmLcjY6vEoOvIG7332Wp';
+            } else if(bookingPlayers == '4'){
+                priceId = 'price_1PGODALcjY6vEoOv9xLJjlov';
+            }
+        } else {
+            if(bookingPlayers == '2'){
+                priceId = 'price_1PGODhLcjY6vEoOvsiQTUCTf';
+            } else if(bookingPlayers == '3'){
+                priceId = 'price_1PGODxLcjY6vEoOvCZPBmACt';
+            } else if(bookingPlayers == '4'){
+                priceId = 'price_1PGOEELcjY6vEoOvOgY2wdcu';
+            }
+        }
+
+        return priceId;
+    };
+
+    // checks if the event can be joined
+    const canJoin = (hours, people) => {
+        if(hours == 1 || people == 4){
+            return false;
+        } else {
+            return true;
+        }
+    };
+
     const schedule = timeslots.filter((item) => item.display === true).map((timeslot, index) => (
         <div key={timeslot.time} className={`${classes.schedule} ${ index == 0 ? classes.scheduleFirst : '' }`}>
             <div className={`${classes.scheduleTitle} ${index == 0 ? classes.scheduleTitleFirst : ''}`}>
@@ -622,10 +734,19 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
-                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        <span className="fw-bold">{event.members.map((m) => {
-                            return <span>{m.firstName} {m.lastName}</span>
-                        })}</span> {event.guests + 1}
+                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
+                        { canJoin(event.hours, event.members.length + event.guests) ? 
+                            <Button onClick={() => {
+                                setJoin(true);
+                                setJoinEventId(event.id);
+                                setJoinEventPeople(event.members.length + event.guests);
+                                setPlayingTime(event.hours.toString());
+                                open();
+                            }} variant="default" style={{ height: 30, width: 30, padding: 0, position: 'absolute', bottom: 5, right: 5 }}>+</Button> 
+                        : '' }
+                        <span className="fw-bold">{event.members.map((member, index) => {
+                            return <span key={index}>{index !== 0 ? ',' : ''} {member.firstName.charAt(0)}. {member.lastName}</span>
+                        })}</span> {event.members.length + event.guests}
                         <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))
@@ -637,18 +758,22 @@ export default function Calendar({ events: data }) {
     <div>
         <Modal opened={opened} onClose={() => {
             close();
-            resetBookingFields();  
-        }} title="Book a Slot" scrollAreaComponent={ScrollArea.Autosize}>
+            resetBookingFields();
+        }} title={ join ? "Join a Slot" : "Book a Slot"} scrollAreaComponent={ScrollArea.Autosize}>
             <Stack>
-                <Text size="sm" fw={500}>Pick a Date</Text>
-                <DatePickerInput
-                    leftSection={icon}
-                    leftSectionPointerEvents="none"
-                    placeholder="Pick a Day"
-                    value={bookingDate}
-                    onChange={setBookingDate}
-                />
-                { user.membership === 'admin' && 
+                { !join && 
+                <> 
+                    <Text size="sm" fw={500}>Pick a Date</Text>
+                    <DatePickerInput
+                        leftSection={icon}
+                        leftSectionPointerEvents="none"
+                        placeholder="Pick a Day"
+                        value={bookingDate}
+                        onChange={setBookingDate}
+                    />
+                </>
+                }
+                { (user.membership === 'admin' && !join) && 
                 <>
                     <Text size="sm" fw={500}>Whom are you booking for?</Text>
                     <SegmentedControl
@@ -674,56 +799,71 @@ export default function Calendar({ events: data }) {
                         searchable
                     />
                 </Stack>
+                { join && 
+                <>
+                    <Text size="sm" fw={500}>Select Number of Players</Text>
+                    <Select
+                        value={bookingPlayers}
+                        onChange={setBookingPlayers}
+                        placeholder='Number of Players'
+                        data={bookingPlayersData}
+                    />
+                    <Text size="sm" fs="italic">Please note that additional fees for guests will apply, determined by the chosen session duration.</Text>
+                </>
+                }
+                { !join && 
+                <>
+                    <Text size="sm" fw={500}>Select Playing Time</Text>
+                    <SegmentedControl
+                        value={playingTime}
+                        onChange={setPlayingTime}
+                        data={[
+                            { label: '1 Hour', value: '1' },
+                            { label: '2 Hours', value: '2' },
+                            { label: '4 Hours', value: '4' }
+                        ]}
+                        color="var(--mantine-color-light-green-6)"
+                    />
+           
+                    <Text size="sm" fw={500}>Select Number of Players</Text>
+                    <Select
+                        value={bookingPlayers}
+                        onChange={setBookingPlayers}
+                        placeholder='Number of Players'
+                        data={bookingPlayersData}
+                    />
+                    <Text size="sm" fs="italic">Please note that additional fees for guests will apply, determined by the chosen session duration.</Text>
+                    
+                    <Text size="sm" fw={500}>Choose Bay</Text>
+                    <SegmentedControl
+                        value={bookingBay}
+                        onChange={setBookingBay}
+                        data={[
+                            { label: 'Bay 1', value: '1' },
+                            { label: 'Bay 2', value: '2' }
+                        ]}
+                        color="var(--mantine-color-light-green-6)"
+                    />
 
-                <Text size="sm" fw={500}>Select Playing Time</Text>
-                <SegmentedControl
-                    value={playingTime}
-                    onChange={setPlayingTime}
-                    data={[
-                        { label: '1 Hour', value: '1' },
-                        { label: '2 Hours', value: '2' },
-                        { label: '4 Hours', value: '4' }
-                    ]}
-                    color="var(--mantine-color-light-green-6)"
-                />
-
-                <Text size="sm" fw={500}>Select Number of Players</Text>
-                <Select
-                    value={bookingPlayers}
-                    onChange={setBookingPlayers}
-                    placeholder='Number of Players'
-                    data={bookingPlayersData}
-                />
-                <Text size="sm" fs="italic">Please note that additional fees for guests will apply, determined by the chosen session duration.</Text>
-                
-                <Text size="sm" fw={500}>Choose Bay</Text>
-                <SegmentedControl
-                    value={bookingBay}
-                    onChange={setBookingBay}
-                    data={[
-                        { label: 'Bay 1', value: '1' },
-                        { label: 'Bay 2', value: '2' }
-                    ]}
-                    color="var(--mantine-color-light-green-6)"
-                />
-
-                <Text size="sm" fw={500}>Select Booking Time</Text>
-                <Select
-                    value={startTime}
-                    onChange={(value) => {
-                        setStartTime(value);
-                        autosetEndTime(value);
-                    }}
-                    placeholder='Start Time'
-                    data={startTimes}
-                />
-                <Select
-                    value={endTime}
-                    onChange={setEndTime}
-                    placeholder='End Time'
-                    data={endTimes}
-                    disabled
-                />
+                    <Text size="sm" fw={500}>Select Booking Time</Text>
+                    <Select
+                        value={startTime}
+                        onChange={(value) => {
+                            setStartTime(value);
+                            autosetEndTime(value);
+                        }}
+                        placeholder='Start Time'
+                        data={startTimes}
+                    />
+                    <Select
+                        value={endTime}
+                        onChange={setEndTime}
+                        placeholder='End Time'
+                        data={endTimes}
+                        disabled
+                    />
+                </>
+                }
                 <Group justify='space-between'>
                     <Button color="red" onClick={() => {
                         close();
@@ -731,7 +871,7 @@ export default function Calendar({ events: data }) {
                     }}>
                         Cancel
                     </Button>
-                    <Button color="var(--mantine-color-light-green-6)" onClick={addEvent}>
+                    <Button color="var(--mantine-color-light-green-6)" onClick={ join ? joinEvent : addEvent}>
                         Confirm
                     </Button>
                 </Group>

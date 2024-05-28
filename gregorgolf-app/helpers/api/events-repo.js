@@ -9,6 +9,7 @@ export const eventsRepo = {
     getNextByDate,
     getByMember,
     update,
+    getById,
     delete: _delete
 };
 
@@ -86,6 +87,10 @@ async function update(id, params) {
     Object.assign(event, params);
 
     await event.save();
+}
+
+async function getById(id) {
+    return await Event.findById(id);
 }
 
 async function _delete(id) {

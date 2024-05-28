@@ -48,7 +48,7 @@ export default function index() {
 
         // process payment
         subscriptionService
-            .processAccount(yearly, userService.userValue.id, discount)
+            .billForAccount(yearly, userService.userValue.id, discount)
             .then((x) => {
                 window.location.assign(x);
             });

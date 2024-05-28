@@ -5,16 +5,16 @@ const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/subscriptions`;
 const userSubject = new BehaviorSubject(typeof window !== 'undefined' && JSON.parse(localStorage.getItem('user')));
 
 export const subscriptionService = {
-    processEvent,
-    processAccount,
+    billForEvent,
+    billForAccount,
     activateAccount,
 };
 
-async function processEvent(customerId, priceId, type, eventId) {
-    return await fetchWrapper.post(`${baseUrl}/event`, { customerId, priceId, type, eventId });
+async function billForEvent(customerId, priceId, type, eventId, join, guests) {
+    return await fetchWrapper.post(`${baseUrl}/event`, { customerId, priceId, type, eventId, join, guests });
 }
 
-async function processAccount(yearly, userId, discount) {
+async function billForAccount(yearly, userId, discount) {
     return await fetchWrapper.post(`${baseUrl}/account`, { yearly, userId, discount });
 }
 
