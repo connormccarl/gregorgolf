@@ -24,6 +24,7 @@ export const userService = {
     sendPasswordReset,
     addPhoto,
     removePhoto,
+    canAddEvent,
     delete: _delete
 };
 
@@ -118,6 +119,19 @@ async function removePhoto(image, id) {
 
         // publish updated user to subscribers
         userSubject.next(user);
+    }
+}
+
+// can add an event if there is less than 3 events active in the next 60 days
+async function canAddEvent(id){
+    const numEvents = await fetchWrapper.get(`${baseUrl}/events/${id}`);
+
+    console.log("numEvents: ", numEvents);
+
+    if(numEvents < 3){
+        return true;
+    } else {
+        return false;
     }
 }
 

@@ -10,6 +10,7 @@ export const eventsRepo = {
     getByMember,
     update,
     getById,
+    get60Days,
     delete: _delete
 };
 
@@ -36,8 +37,79 @@ async function getAll() {
 }
 
 async function getByMember(member) {
-    return await Event.find({
-        'members.0.id': member
+    return await Event.find(
+        {
+            $and: [
+                {
+                    "members": {
+                        $elemMatch:
+                        {
+                            "id": member
+                        }
+                    }
+                },
+                { 
+                    $or: [
+                        { startTime: {
+                            $gte: new Date()
+                        }},
+                        { endTime: {
+                            $gte: new Date()
+                        }}
+                    ]
+                }
+            ]
+        }
+    );
+}
+
+async function get60Days(id){
+    return await Event.aggregate([
+        {
+            $match:
+            {
+                startTime: {
+                    $gte: new Date()
+                }
+            }
+        },
+        {
+            $unwind:
+            {
+                path: "$members",
+            },
+        },
+        {
+            $match:
+            {
+                "members.id": id,
+            },
+        },
+        {
+            $group:
+            {
+                _id: "$members.id",
+                count: {
+                $sum: 1,
+                },
+            },
+        },
+        {
+            $project:
+            {
+                _id: 0,
+            },
+        },
+    ])
+    .then(result => {
+        if(result.length == 0){
+            return 0;
+        } else {
+            return result[0].count;
+        }
+    })
+    .catch(err => {
+        throw 'Error getting events in next 60 days.'; 
     });
 }
 
@@ -76,6 +148,7 @@ async function getNextByDate(date) {
         ]
     });
 }
+
 
 async function update(id, params) {
     const event = await Event.findById(id);

@@ -43,5 +43,6 @@ async function sendEmail(req, res) {
         res.status(200).json({ success: 'true' });
     } catch (e) {
         alertService.error(e);
+        res.status(404).json({ error: "email not found"});
     }
 }

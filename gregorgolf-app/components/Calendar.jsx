@@ -735,13 +735,17 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
                     <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        { canJoin(event.hours, event.members.length + event.guests) ? 
-                            <Button onClick={() => {
-                                setJoin(true);
-                                setJoinEventId(event.id);
-                                setJoinEventPeople(event.members.length + event.guests);
-                                setPlayingTime(event.hours.toString());
-                                open();
+                        { canJoin(event.hours, event.members.length + event.guests) && !event.members.some(member => member.id === user.id) ? 
+                            <Button onClick={async () => {
+                                if(await userService.canAddEvent(user.id)){
+                                    setJoin(true);
+                                    setJoinEventId(event.id);
+                                    setJoinEventPeople(event.members.length + event.guests);
+                                    setPlayingTime(event.hours.toString());
+                                    open();
+                                } else {
+                                    alert("Can't join event. 3 events already added over the next 60 days.");
+                                }
                             }} variant="default" style={{ height: 30, width: 30, padding: 0, position: 'absolute', bottom: 5, right: 5 }}>+</Button> 
                         : '' }
                         <span className="fw-bold">{event.members.map((member, index) => {
@@ -879,9 +883,13 @@ export default function Calendar({ events: data }) {
         </Modal>
         <div className={classes.menuBar}>
             <Group justify='space-between' className={classes.menuGroup}>
-                <Button onClick={() => {
-                    setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
-                    open();
+                <Button onClick={async () => {
+                    if(await userService.canAddEvent(user.id)){
+                        setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
+                        open();
+                    } else {
+                        alert("Can't add event. 3 events already added over the next 60 days.");
+                    }
                 }} color="var(--mantine-color-light-green-6)">
                     Book a Slot
                 </Button>
