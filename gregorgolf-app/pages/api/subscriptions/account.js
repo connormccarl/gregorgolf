@@ -49,6 +49,8 @@ async function payment(req, res) {
         const user = await usersRepo.getById(userId);
         if(user.customerId){
             checkoutBody.customer = user.customerId;
+        } else {
+            checkoutBody.customer_email = user.email;
         }
 
         // Create Checkout Sessions from body params.

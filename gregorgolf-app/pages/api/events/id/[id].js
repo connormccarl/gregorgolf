@@ -22,6 +22,7 @@ async function update(req, res) {
         try {
             // remove data from existing event if joined canceled
             const event = await eventsRepo.getById(req.query.id);
+
             const payload = {
                 members: [...event.members.toSpliced(-1)],
                 guests: event.guests - req.body.remove

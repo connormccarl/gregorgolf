@@ -126,8 +126,6 @@ async function removePhoto(image, id) {
 async function canAddEvent(id){
     const numEvents = await fetchWrapper.get(`${baseUrl}/events/${id}`);
 
-    console.log("numEvents: ", numEvents);
-
     if(numEvents < 3){
         return true;
     } else {

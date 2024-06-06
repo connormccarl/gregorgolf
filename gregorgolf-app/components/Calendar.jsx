@@ -112,7 +112,7 @@ export default function Calendar({ events: data }) {
 
             eventService.update(eventId, { payment: 'paid', sessionId: sessionId })
                 .then(() => {
-                    if(query.get('join')){
+                    if(query.get('join') === 'true'){
                         alert("Slot updated.");
                     } else {
                         alert("Slot added.");
@@ -125,7 +125,7 @@ export default function Calendar({ events: data }) {
         if(query.get('canceled')) {
             const eventId = query.get('event');
 
-            if(query.get('join')){
+            if(query.get('join') === 'true'){
                 // remove event updates if join
                 eventService.update(eventId, { remove: query.get('guests') })
                     .then(() => {
@@ -309,7 +309,7 @@ export default function Calendar({ events: data }) {
     useEffect(() => {
         // populate members list for book a slot for a member
         userService.getAll().then(x => {
-            setMembers(x.map((member) => { 
+            setMembers(x.filter(member => member.subscriptionStatus === 'active').map((member) => { 
                 const memberItem = {};
     
                 memberItem['label'] = member.firstName + ' ' + member.lastName;
@@ -639,7 +639,7 @@ export default function Calendar({ events: data }) {
                 const customerId = bookingFor === 'self' ? user.customerId : bookingMember.customerId;
 
                 subscriptionService
-                    .billForEvent(customerId, priceId, "payment", createdEventId, false, 0)
+                    .billForEvent(customerId, priceId, "payment", createdEventId, false, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1)
                     .then((x) => {
                         window.location.assign(x);
                     });
@@ -655,8 +655,6 @@ export default function Calendar({ events: data }) {
             member: { id: user.id, firstName: user.firstName, lastName: user.lastName },
             guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
         };
-
-        console.log("current event: ", joinEventId);
 
         // update view
         setEvents(events.map((event) => {
