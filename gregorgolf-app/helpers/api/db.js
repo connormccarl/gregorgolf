@@ -5,7 +5,7 @@ const { serverRuntimeConfig } = getConfig();
 const Schema = mongoose.Schema;
 
 try {
-    mongoose.connect(process.env.NEXT_PUBLIC_MONGODB_URI || serverRuntimeConfig.connectionString);
+    mongoose.connect(process.env.NEXT_PUBLIC_MONGODB_URI);
     mongoose.Promise = global.Promise;
 } catch (error){
     throw 'Can not connect to database';
