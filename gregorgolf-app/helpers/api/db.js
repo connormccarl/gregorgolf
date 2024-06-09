@@ -1,7 +1,6 @@
 import getConfig from 'next/config';
 import mongoose from 'mongoose';
 
-const { serverRuntimeConfig } = getConfig();
 const Schema = mongoose.Schema;
 
 try {
