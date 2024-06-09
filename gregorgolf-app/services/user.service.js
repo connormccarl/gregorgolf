@@ -38,7 +38,10 @@ async function login(email, password) {
 }
 
 function logout(e) {
-    e.preventDefault();
+    if(e) {
+        e.preventDefault();
+    }
+    
     alertService.clear();
     // remove user from local storage, publish null to user subscribers and redirect to login page
     localStorage.removeItem('user');
