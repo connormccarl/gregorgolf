@@ -1,12 +1,14 @@
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle } from 'react';
 import moment from 'moment';
-import { Container, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
+import { Button, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
 import { IconSend, IconPhoneCall, IconAt, IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
 
-import { Spinner } from 'components';
-import { Layout } from 'components';
+import { Layout, Alert, Spinner } from 'components';
 import { userService } from 'services';
+
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 import classes from './Index.module.css';
 import { alertService } from '@/services';
@@ -66,18 +68,38 @@ function Index() {
 
     useEffect(() => {
         userService.getAll().then(x => {
-            setData(x);
-            setSortedData(x);
+            setData(modifyData(x));
+            setSortedData(modifyData(x));
         });
     }, []);
 
+    // modify data for sorting capabilities (eliminate nested objects and make all strings)
+    const modifyData = (data) => {
+      return data.map((row) => {
+        const newRow = {};
+
+        newRow.id = row.id.toString();
+        newRow.photo = row.photo?.toString();
+        newRow.name = row.firstName + ' ' + row.lastName;
+        newRow.email = row.email.toString();
+        newRow.membership = row.membership?.toString();
+        newRow.accountStatus = row.accountStatus.toString();
+        newRow.subscriptionStatus = row.subscriptionStatus.toString();
+        newRow.subscriptionDate = row.subscriptionDate ? moment(row.subscriptionDate).calendar() : '';
+        newRow.subscriptionFrequency = row.subscriptionFrequency?.toString();
+        newRow.createdAt = moment(row.createdAt).calendar();
+
+        return newRow;
+      });
+    };
+
     function deleteUser(id) {
-        setData(data.map(x => {
+        setSortedData(sortedData.map(x => {
             if (x.id === id) { x.isDeleting = true; }
             return x;
         }));
         userService.delete(id).then(() => {
-            setData(data => data.filter(x => x.id !== id));
+            setSortedData(sortedData => sortedData.filter(x => x.id !== id));
         });
     }
 
@@ -94,16 +116,90 @@ function Index() {
         setSortedData(sortData(data, { sortBy, reversed: reverseSortDirection, search: value }));
     }
 
+    // update membership type (user/admin)
     const updateMembership = async (id, membership) => {
         alertService.clear();
-        await userService.update(id, { membership: membership });
-        alertService.success("Membership updated");
+
+        // set account and subscription status depending on role change
+        let account;
+        let subscription;
+        if(membership === 'admin'){
+          account = 'active';
+          subscription = 'active';
+        } else {
+          account = 'active';
+          subscription = 'inactive';
+        }
+
+        await userService.update(id, { membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null });
+        
+        setData(data => data.map(item => {
+          if(item.id === id){
+            return { ...item, membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
+        setSortedData(sortedData => sortedData.map(item => {
+          if(item.id === id){
+            return { ...item, membership: membership, accountStatus: account, subscriptionStatus: subscription, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
+
+        alertService.success("Membership updated", true);
     }
+
+    // update account status (pending/active)
+    const updateAccountStatus = async (id, status) => {
+      alertService.clear();
+      await userService.update(id, { accountStatus: status });
+      alertService.success("Account Status updated");
+    }
+
+    // update account status (pending/active)
+    const updateSubscriptionStatus = async (id, status) => {
+      alertService.clear();
+      if(status === 'inactive'){
+        await userService.update(id, { subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null });
+        
+        setData(data => data.map(item => {
+          if(item.id === id){
+            return { ...item, subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
+        setSortedData(sortedData => sortedData.map(item => {
+          if(item.id === id){
+            return { ...item, subscriptionStatus: status, subscriptionDate: null, subscriptionFrequency: null };
+          } else {
+            return { ...item };
+          }
+        }));
+      }
+      alertService.success("Subscription Status updated");
+    }
+
+    const exportData = () => {
+      const worksheet = XLSX.utils.json_to_sheet(sortedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+      // Buffer to store the generated Excel file
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+
+      saveAs(blob, "users.xlsx");
+    };
 
     return (
         <Layout>
             <h1>Users</h1>
-            <Link href="/users/add" className="btn btn-sm btn-success mb-2">Add User</Link>
+            <Button onClick={exportData} color="var(--mantine-color-light-green-6)" className='ms-2 mb-2'>
+                Export
+            </Button>
 
             <ScrollArea>
             <TextInput
@@ -121,56 +217,56 @@ function Index() {
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('createdAt')}
                         >
-                        Created At
+                          Created At
                         </Th>
                         <Th
                         sorted={sortBy === 'name'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('name')}
                         >
-                        Name
+                          Name
                         </Th>
                         <Th
                         sorted={sortBy === 'email'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('email')}
                         >
-                        Email
+                          Email
                         </Th>
                         <Th
                         sorted={sortBy === 'membership'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('membership')}
                         >
-                        Membership
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'subscriptionDate'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('subscriptionDate')}
-                        >
-                        Subscription Date
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'subscriptionStatus'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('subscriptionStatus')}
-                        >
-                        Subscription Status
+                          Membership
                         </Th>
                         <Th
                         sorted={sortBy === 'accountStatus'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('accountStatus')}
                         >
-                        Account Status
+                          Account Status
+                        </Th>
+                        <Th
+                        sorted={sortBy === 'subscriptionStatus'}
+                        reversed={reverseSortDirection}
+                        onSort={() => setSorting('subscriptionStatus')}
+                        >
+                          Subscription Status
+                        </Th>
+                        <Th
+                        sorted={sortBy === 'subscriptionDate'}
+                        reversed={reverseSortDirection}
+                        onSort={() => setSorting('subscriptionDate')}
+                        >
+                          Subscription Date
                         </Th>
                         <Th
                         sorted={sortBy === 'subscriptionRenewal'}
                         reversed={reverseSortDirection}
                         onSort={() => setSorting('subscriptionRenewal')}
                         >
-                        Subscription Renewal
+                          Subscription Plan
                         </Th>
                     </Table.Tr>
                 </Table.Tbody>
@@ -179,13 +275,13 @@ function Index() {
                         sortedData.map((user) => (
                             <Table.Tr key={user.id}>
                               <Table.Td>
-                                <Text>{moment(user.createdAt).format('MMM D, YYYY')}</Text>
+                                <Text>{user.createdAt}</Text>
                               </Table.Td>
                               <Table.Td>
                                 <Group gap="sm">
                                   <Avatar size={30} src={user.photo} radius={30} />
                                   <Text fz="sm" fw={500}>
-                                    {user.firstName + ' ' + user.lastName}
+                                    {user.name}
                                   </Text>
                                 </Group>
                               </Table.Td>
@@ -196,30 +292,45 @@ function Index() {
                               </Table.Td>
                               <Table.Td>
                                 <Select
-                                    data={[{ value: 'user', label: 'User'}, { value: 'admin', 'label': 'Admin' }]}
-                                    defaultValue={user.membership}
-                                    style={{width: '7em'}}
-                                    onChange={(value, option) => updateMembership(user.id, value)}
+                                  data={[{ value: 'user', label: 'User'}, { value: 'admin', 'label': 'Admin' }]}
+                                  defaultValue={user.membership}
+                                  style={{width: '7em'}}
+                                  onChange={(value, option) => updateMembership(user.id, value)}
                                 />
                               </Table.Td>
                               <Table.Td>
+                                { user.membership === 'admin' ?
+                                    user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1)
+                                    :
+                                    <Select
+                                      data={[{ value: 'pending', label: 'Pending'}, { value: 'active', 'label': 'Active' }]}
+                                      defaultValue={user.accountStatus}
+                                      style={{width: '8em'}}
+                                      onChange={(value, option) => updateAccountStatus(user.id, value)}
+                                    />
+                                }
+                              </Table.Td>
+                              <Table.Td>
+                                { user.membership === 'admin' ?
+                                    user.subscriptionStatus === 'active' ? 'Active' : 'Inactive' 
+                                    :
+                                    <Select
+                                      data={[{ value: 'active', label: 'Active'}, { value: 'inactive', 'label': 'Inactive' }]}
+                                      defaultValue={user.subscriptionStatus}
+                                      style={{width: '8em'}}
+                                      onChange={(value, option) => updateSubscriptionStatus(user.id, value)}
+                                      disabled={user.subscriptionStatus === 'inactive' ? true : false}
+                                    />
+                                }
+                              </Table.Td>
+                              <Table.Td>
                                 <Text>
-                                  Subscription Date
+                                  {user.subscriptionDate}
                                 </Text>
                               </Table.Td>
                               <Table.Td>
                                 <Text>
-                                  Subscription Status
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  Account Status
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  Subscription Renewal
+                                  { user.subscriptionFrequency && (user.subscriptionFrequency === 'month' ? 'Monthly' : 'Yearly') }
                                 </Text>
                               </Table.Td>
                               <Table.Td>

@@ -1,74 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
 import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
 import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
-import { userService, eventService } from 'services';
+import { userService, eventService, subscriptionService } from 'services';
+
+import { loadStripe } from '@stripe/stripe-js';
 
 import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
-import { from } from 'rxjs';
-
-/*const events_json = [
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 0,
-        hours: 3,
-        start_time: new Date('2024-03-26T06:00:00.000Z'),
-        end_time: new Date('2024-03-26T09:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T06:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T09:00:00.000Z'),
-        effective_hours: 3,
-    },
-    {
-        bay: '2',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 3,
-        hours: 4,
-        start_time: new Date('2024-03-26T07:00:00.000Z'),
-        end_time: new Date('2024-03-26T11:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T07:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T11:00:00.000Z'),
-        effective_hours: 4,
-    },
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 1,
-        hours: 1,
-        start_time: new Date('2024-03-26T11:00:00.000Z'),
-        end_time: new Date('2024-03-26T12:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T11:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T12:00:00.000Z'),
-        effective_hours: 1,
-    },
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 2,
-        hours: 1,
-        start_time: new Date('2024-03-26T14:00:00.000Z'),
-        end_time: new Date('2024-03-26T15:00:00.000Z'),
-        effective_start_time: new Date('2024-03-26T14:00:00.000Z'),
-        effective_end_time: new Date('2024-03-26T15:00:00.000Z'),
-        effective_hours: 1,
-    },
-    {
-        bay: '1',
-        members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-        guests: 2,
-        hours: 2,
-        start_time: new Date('2024-03-27T06:00:00.000Z'),
-        end_time: new Date('2024-03-27T08:00:00.000Z'),
-        effective_start_time: new Date('2024-03-27T06:00:00.000Z'),
-        effective_end_time: new Date('2024-03-27T08:00:00.000Z'),
-        effective_hours: 2,
-    }
-]
-*/
 
 const printTime = (timeslot) => {
     const time = timeslot.split(' ')[0];
@@ -79,39 +22,55 @@ const printTime = (timeslot) => {
     return newTime;
 }
 
-let timeslots_json = [];
-for(let i = 0; i < 28; i++){
-    // set display value in booking times for timeslot
-    let displayValue = '';
-    if(i >= 24){
-        displayValue += '(+1) ';
-    }
-
-    displayValue += printTime(new Date(new Date('2024-04-05T08:00:00.000Z').setHours(i,0,0,0)).toLocaleTimeString());
-
-    timeslots_json.push({
-        display: i < 24 ? true : false,
-        time: new Date(new Date('2024-04-05T08:00:00.000Z').setHours(i,0,0,0)),
-        value: displayValue
-    });
-}
-
 //console.log(timeslots_json);
 //console.log(events_json);
 
-const oldtimeslots = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM','7 AM','8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM','8 PM','9 PM','10 PM','11 PM']
+const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
+
+const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+);
 
 export default function Calendar({ events: data }) {
+    const router = useRouter();
+    // calendar view fields
+    const [date, setDate] = useState(getCurrentDay());
+    const [view, setView] = useState('Both');
+    const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
+    
+    // calendar timeslots
+    let timeslots_json = [];
+    for(let i = 0; i < 28; i++){
+        // set display value in booking times for timeslot
+        let displayValue = '';
+        if(i >= 24){
+            displayValue += '(+1) ';
+        }
+
+        // TEST VALUE: '2024-04-05T08:00:00.000Z'
+        displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
+
+        // TEST VALUE: '2024-04-05T08:00:00.000Z'
+        timeslots_json.push({
+            display: i < 24 ? true : false,
+            time: new Date(new Date(date).setHours(i,0,0,0)),
+            value: displayValue
+        });
+    }
+
+    // event fields
     const [events, setEvents] = useState(null);
     const [timeslots, setTimeslots] = useState(timeslots_json);
 
-    const [date, setDate] = useState(new Date());
-    const [view, setView] = useState('Both');
-    const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
+    // join event control
+    const [join, setJoin] = useState(false);
+    const [joinEventId, setJoinEventId] = useState('');
+    const [joinEventPeople, setJoinEventPeople] = useState(0);
+    
+    // book a slot fields
     const [opened, { open, close }] = useDisclosure(false);
-
     const [bookingBay, setBookingBay] = useState('1');
-    const [bookingDate, setBookingDate] = useState(new Date());
+    const [bookingDate, setBookingDate] = useState(getCurrentDay());
     const [bookingFor, setBookingFor] = useState('self');
     const [bookingMemberId, setBookingMemberId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -123,19 +82,234 @@ export default function Calendar({ events: data }) {
     ]);
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
-    const [user, setUser] = useState(null);
+    const [startTimes, setStartTimes] = useState([]);
+    const [endTimes, setEndTimes] = useState([]);
+
+    // page fields
+    const [user, setUser] = useState(userService.userValue);
     const [bookingMember, setBookingMember] = useState(null);
 
+    /*
     useEffect(() => {
         console.log("master page events: ", events);
         console.log("master timeslots: ", timeslots);
     })
+    */
+
+    // Check to see if this is a redirect back from Stripe Checkout
+    useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+
+        // subscription activated
+        if(query.get('activated')){
+            alert("Subscription activated.");
+        }
+
+        // event payment success
+        if(query.get('success')) {
+            const eventId = query.get('event');
+            const sessionId = query.get('session_id');
+
+            eventService.update(eventId, { payment: 'paid', sessionId: sessionId })
+                .then(() => {
+                    if(query.get('join') === 'true'){
+                        alert("Slot updated.");
+                    } else {
+                        alert("Slot added.");
+                    }
+                    router.push('/');
+                });
+        }
+
+        // event payment canceled so delete the event from the database
+        if(query.get('canceled')) {
+            const eventId = query.get('event');
+
+            if(query.get('join') === 'true'){
+                // remove event updates if join
+                eventService.update(eventId, { remove: query.get('guests') })
+                    .then(() => {
+                        alert('Slot not joined. Please complete the payment.');
+                        router.push('/');
+                    });
+            } else {
+                // delete event
+                eventService.delete(eventId)
+                    .then(() => {
+                        alert('Slot not added. Please try again and complete the payment.');
+                        router.push('/');
+                    });
+            }
+        }
+    }, []);
+
+    // update events based on date selection
+    useEffect(() => {
+        eventService.getByDate(new Date(date).toISOString())
+            .then(x => {
+                setEvents(calcEffectiveTimes(x, date));
+            })
+    }, [date])
+
+    const calcEffectiveTimes = (events, currDate) => {
+        const currEvents = events;
+
+        currEvents.map((event) => {
+            // calculate effective start time
+            let currStartTime = new Date(event.startTime);
+            let currHours = event.hours;
+    
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            while(currStartTime < new Date(new Date(currDate).setHours(0,0,0,0))){
+                // add an hour
+                currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
+                currHours -= 1;
+            }
+            event.effective_start_time = currStartTime;
+            
+            // calculate effective end time
+            let currEndTime = new Date(event.endTime);
+    
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            while(currEndTime > new Date(new Date(currDate).setHours(24,0,0,0))){
+                currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
+                currHours -= 1;
+            }
+            event.effective_end_time = currEndTime;
+            
+            // set effective hours
+            event.effective_hours = currHours;
+        });
+
+        return currEvents;
+    }
+
+    // update blocked out times on booking date selection
+    useEffect(() => {
+        setAvailableTimeslots();
+    }, [bookingDate]);
+
+    const setAvailableTimeslots = async () => {
+        // generate default timeslots
+        const currTimeslots = getTimeslots(bookingDate);
+
+        // get events for that day
+        let currEvents = [];
+        await eventService.getByDate(new Date(bookingDate).toISOString())
+            .then(x => currEvents = x);
+        
+        // calculate effective times
+        currEvents = calcEffectiveTimes(currEvents, bookingDate);
+
+        //console.log("current events: ", currEvents);
+
+        // update timeslots based on current events
+        await currEvents.forEach((event) => {
+            // find event start timeslot
+            const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.toLocaleTimeString() === new Date(event.effective_start_time).toLocaleTimeString());
+
+            // iterate through each hour in timeslot and set booked flag
+            for(let i = 0; i < event.effective_hours; i++){
+                // update timeslot record
+                const currTimeslotIndex = timeslotIndex + i;
+                const currTimeslot = currTimeslots[currTimeslotIndex];
+                if(currTimeslot){ 
+                    // update bay timeslot to booked
+                    if(event.bay == 1){
+                        currTimeslot.bay1_booked = true;
+                    } else {
+                        currTimeslot.bay2_booked = true;
+                    }
+                }
+            }
+        });
+
+        
+        // update timeslots for next day availability
+        await eventService.getNextDayAvailability(new Date(bookingDate).toISOString())
+            .then(x => x.forEach((event) => {
+                // find event start timeslot
+                const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(event.startTime).getTime());
+
+                // iterate through each hour in timeslot and set booked flag
+                for(let i = 0; i < event.hours; i++){
+                    // update timeslot record
+                    const currIndex = timeslotIndex + i;
+                    const currTimeslot = currTimeslots[currIndex];
+                    if(currTimeslot){ 
+                        // update bay timeslot to booked
+                        if(event.bay == 1){
+                            currTimeslot.bay1_booked = true;
+                        } else {
+                            currTimeslot.bay2_booked = true;
+                        }
+                    }
+                }
+        }));
+        
+        //console.log("current timeslots: ", currTimeslots);
+        // set timeslots for booking
+        await setTimeslots(currTimeslots);
+
+        // set start and end hours
+        setStartTime(null);
+        setEndTime(null);
+        getStartTimes(currTimeslots);
+    }
+
+    const getTimeslots = (currDate) => {
+        let timeslots = [];
+        for(let i = 0; i < 28; i++){
+            // set display value in booking times for timeslot
+            let displayValue = '';
+            if(i >= 24){
+                displayValue += '(+1) ';
+            }
+
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            displayValue += printTime(new Date(new Date(currDate).setHours(i,0,0,0)).toLocaleTimeString());
+
+            // TEST VALUE: '2024-04-05T08:00:00.000Z'
+            timeslots.push({
+                display: i < 24 ? true : false,
+                time: new Date(new Date(currDate).setHours(i,0,0,0)),
+                value: displayValue
+            });
+        }
+
+        return timeslots;
+    };
+
+    // handle start and end times
+    useEffect(() => {
+        setStartTime(null);
+        setEndTime(null);
+        getStartTimes(timeslots);
+    }, [bookingBay, playingTime, events]);
 
     useEffect(() => {
-        console.log("entering useEffect first load");
+        getEndTimes();
+    }, [startTime, bookingBay, playingTime, events]);
+
+    // autoset End Time selection
+    const autosetEndTime = (value) => {
+        if(!isNull(value)){
+            const startIndex = timeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(value).getTime());
+            const workingDuration = parseInt(playingTime);
+            const endIndex = startIndex + workingDuration;
+    
+            // autosets End Time selection
+            setEndTime(timeslots[endIndex].time.toISOString());
+        } else {
+            setEndTime(null);
+        }
+    };
+
+    // useEffect first load
+    useEffect(() => {
         // populate members list for book a slot for a member
         userService.getAll().then(x => {
-            setMembers(x.map((member) => { 
+            setMembers(x.filter(member => member.subscriptionStatus === 'active').map((member) => { 
                 const memberItem = {};
     
                 memberItem['label'] = member.firstName + ' ' + member.lastName;
@@ -149,13 +323,12 @@ export default function Calendar({ events: data }) {
         setUser(userService.userValue);
 
         // set events to parameter data
-        console.log("parameter events: ", data);
         setEvents(data);
 
         // update booked timeslots
         data.forEach((event) => {
             // find event start timeslot
-            const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === event.effective_start_time.toLocaleTimeString());
+            const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === new Date(event.effective_start_time).toLocaleTimeString());
 
             // iterate through each hour in timeslot and set booked flag
             for(let i = 0; i < event.effective_hours; i++){
@@ -164,7 +337,7 @@ export default function Calendar({ events: data }) {
                 const currTimeslot = timeslots_json[currTimeslotIndex];
                 if(currTimeslot){ 
                     // update bay timeslot to booked
-                    if(event.bay == '1'){
+                    if(event.bay == 1){
                         currTimeslot.bay1_booked = true;
                     } else {
                         currTimeslot.bay2_booked = true;
@@ -174,10 +347,10 @@ export default function Calendar({ events: data }) {
         });
 
         // update booked timeslots into the next day
-        eventService.getNextDayAvailability()
+        eventService.getNextDayAvailability(new Date().toISOString())
             .then(x => x.forEach((event) => {
                 // find event start timeslot
-                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.start_time.getTime());
+                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.startTime.getTime());
 
                 // iterate through each hour in timeslot and set booked flag
                 for(let i = 0; i < event.hours; i++){
@@ -186,7 +359,7 @@ export default function Calendar({ events: data }) {
                     const currTimeslot = timeslots_json[currIndex];
                     if(currTimeslot){ 
                         // update bay timeslot to booked
-                        if(event.bay == '1'){
+                        if(event.bay == 1){
                             currTimeslot.bay1_booked = true;
                         } else {
                             currTimeslot.bay2_booked = true;
@@ -198,113 +371,93 @@ export default function Calendar({ events: data }) {
         setTimeslots(timeslots_json);
     }, []);
 
-    /*
+    const addEventToDisplay = async (newEvent) => {
+        let currEvents = [...events, newEvent];
+        setEvents(calcEffectiveTimes(currEvents, date));
+
+        // update timeslots for current display to booked = true
+        await updateBookedTimeslots(newEvent);
+    };
+
+    // update select number of players data depending on what playing time is selected
     useEffect(() => {
-        loadData();
-    }, [date]);
-
-    */
-    const loadData = async () => {
-        let todaysEvents;
-
-        await eventService.getByDate(date)
-            .then(x => todaysEvents = x);
-
-        todaysEvents.map((event) => {
-            // calculate effective start time
-            let currStartTime = new Date(event.start_time.getTime());
-            let currHours = event.hours;
-            while(currStartTime < new Date(new Date().setHours(0,0,0,0))){
-                // add an hour
-                currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
-                currHours -= 1;
+        // set booking players data for new events
+        if(joinEventPeople == 0){
+            if(playingTime == '1'){
+                setBookingPlayersData([
+                    { label: 'Single Member', value: '1' },
+                    { label: 'Member with 1 Guest - $10', value: '2' }
+                ]);
+                if(bookingPlayers == '3' || bookingPlayers == '4'){
+                    setBookingPlayers('2');
+                }
+            } else if(playingTime == '2'){
+                setBookingPlayersData([
+                    { label: 'Single Member', value: '1' },
+                    { label: 'Member with 1 Guest - $20', value: '2' },
+                    { label: 'Member with 2 Guests - $35', value: '3' },
+                    { label: 'Member with 3 Guests - $45', value: '4' }
+                ]);
+            } else {
+                setBookingPlayersData([
+                    { label: 'Single Member', value: '1' },
+                    { label: 'Member with 1 Guest - $40', value: '2' },
+                    { label: 'Member with 2 Guests - $70', value: '3' },
+                    { label: 'Member with 3 Guests - $90', value: '4' }
+                ]);
             }
-            event.effective_start_time = currStartTime;
-            
-            // calculate effective end time
-            let currEndTime = new Date(event.end_time.getTime());
-            while(currEndTime > new Date(date.setHours(24,0,0,0))){
-                currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
-                currHours -= 1;
-            }
-            event.effective_end_time = currEndTime;
-            
-            // set effective hours
-            event.effective_hours = currHours;
-        });
-        
-
-        setEvents(todaysEvents);
-    }
-
-    /*
-    useEffect(() => {
-         // update booked timeslots
-        events_json.forEach((event) => {
-            for(let i = 0; i < event.effective_hours; i++){
-                // convert time to currTime in blocked out event section
-                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.toLocaleTimeString() === event.effective_start_time.toLocaleTimeString());
-                const currTimeslotIndex = timeslotIndex + i;
-
-                // update timeslot record
-                const currTimeslot = timeslots[currTimeslotIndex];
-                if(currTimeslot){ 
-                    // update bay timeslot to booked
-                    if(event.bay == '1'){
-                        currTimeslot.bay1_booked = true;
-                    } else {
-                        currTimeslot.bay2_booked = true;
-                    }
+        } else { // set booking players data for joined events
+            if(playingTime == '2'){
+                if(joinEventPeople == 1){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $20', value: '2' },
+                        { label: 'Member with 2 Guests - $35', value: '3' }
+                    ]);
+                } else if(joinEventPeople == 2){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $20', value: '2' }
+                    ]);
+                } else if(joinEventPeople == 3){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' }
+                    ]);
+                }
+            } else {
+                if(joinEventPeople == 1){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $40', value: '2' },
+                        { label: 'Member with 2 Guests - $70', value: '3' }
+                    ]);
+                } else if(joinEventPeople == 2){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' },
+                        { label: 'Member with 1 Guest - $40', value: '2' }
+                    ]);
+                } else if(joinEventPeople == 3){
+                    setBookingPlayersData([
+                        { label: 'Single Member', value: '1' }
+                    ]);
                 }
             }
-        });
-
-        setTimeslots(timeslots_json);
-
-        console.log(events);
-
-        console.log(timeslots);
-
-    }, [date]);
-    */
-
-    useEffect(() => {
-        if(playingTime == '1'){
-            setBookingPlayersData([
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $10', value: '2' }
-            ]);
-            if(bookingPlayers == '3' || bookingPlayers == '4'){
-                setBookingPlayers('2');
-            }
-        } else if(playingTime == '2'){
-            setBookingPlayersData([
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $20', value: '2' },
-                { label: 'Member with 2 Guests - $35', value: '3' },
-                { label: 'Member with 3 Guests - $45', value: '4' }
-            ]);
-        } else {
-            setBookingPlayersData([
-                { label: 'Single Member', value: '1' },
-                { label: 'Member with 1 Guest - $40', value: '2' },
-                { label: 'Member with 2 Guests - $70', value: '3' },
-                { label: 'Member with 3 Guests - $90', value: '4' }
-            ]);
         }
     }, [playingTime]);
 
     
-    const getEventWidth = (numGuests) => {
-        switch(numGuests){
-            case 1:
-                return view === 'Both' ? classes.event2Two : classes.event2One;
-            case 2: 
-                return view === 'Both' ? classes.event3Two : classes.event3One;
-            case 3:
-                return view === 'Both' ? classes.event4Two : classes.event4One;
-            default: 
-                return view === 'Both' ? classes.event1Two : classes.event1One;
+    const getEventWidth = (hours, people) => {
+        if(hours == 1 || people == 4){
+            return view === 'Both' ? classes.event4Two : classes.event4One;
+        } else {
+            switch(people){
+                case 2:
+                    return view === 'Both' ? classes.event2Two : classes.event2One;
+                case 3: 
+                    return view === 'Both' ? classes.event3Two : classes.event3One;
+                default: 
+                    return view === 'Both' ? classes.event1Two : classes.event1One;
+            }
         }
     }
     
@@ -318,62 +471,258 @@ export default function Calendar({ events: data }) {
         }
     }
 
-    const getStartTimes = () => {
-        const workingTimeslots = timeslots.filter(timeslot => timeslot.display === true);
+    const getStartTimes = (currTimeslots) => {
+        const workingTimeslots = currTimeslots.filter(timeslot => timeslot.display === true);
         const workingDuration = parseInt(playingTime);
         for(let i = 0; i < workingTimeslots.length; i++){
             const workingSlot = workingTimeslots[i];
 
-            // see if unavailable
-            let unavailable = workingSlot.bay1_booked;
+            // see if unavailable based on bay
+            let unavailable;
+            
+            if(bookingBay == 1){
+                unavailable = workingSlot.bay1_booked;
+            } else {
+                unavailable = workingSlot.bay2_booked;
+            }
+            
             // if not available for the entire duration, unavailable
             if(workingDuration > 1) {
                 for(let x = 1; x < workingDuration; x++){
-                    if(timeslots[i + x].bay1_booked === true){
-                        unavailable = true;
+                    if(bookingBay == 1){
+                        if(timeslots[i + x].bay1_booked === true){
+                            unavailable = true;
+                        }
+                    } else {
+                        if(timeslots[i + x].bay2_booked === true){
+                            unavailable = true;
+                        }
                     }
                 }
             }
-            workingSlot.bay1_available = !unavailable;
+
+            if(bookingBay == 1){
+                workingSlot.bay1_available = !unavailable;
+            } else {
+                workingSlot.bay2_available = !unavailable;
+            }
         }
 
-        console.log("workingTimeslots: ", workingTimeslots);
+        //console.log("workingTimeslots: ", workingTimeslots);
 
-        return workingTimeslots.map(timeslot => {
+        setStartTimes(workingTimeslots.map(timeslot => {
             const listItem = {};
 
             listItem['value'] = timeslot.time.toISOString();
             listItem['label'] = timeslot.value;
 
-            if(timeslot.bay1_available === false){
-                listItem['disabled'] = true;
+            if(bookingBay == 1){
+                if(timeslot.bay1_available === false){
+                    listItem['disabled'] = true;
+                }
+            } else {
+                if(timeslot.bay2_available === false){
+                    listItem['disabled'] = true;
+                }
             }
 
             return listItem;
-        });
+        }));
     }
 
-    const addEvent = async () => {
-        if(bookingFor === 'other'){
-            setBookingMember(await userService.getById(bookingMemberId));
+    const getEndTimes = () => {
+        const startIndex = timeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(startTime).getTime());
+        const workingDuration = parseInt(playingTime);
+        const endIndex = startIndex + workingDuration;
+
+        const listItem = {};
+
+        listItem['value'] = timeslots[endIndex].time.toISOString();
+        listItem['label'] = timeslots[endIndex].value;
+
+        setEndTimes([listItem]);
+    }
+
+    // check if value is null
+    const isNull = (value) => typeof value === "object" && !value;
+
+    // clear and reset book a slot fields
+    const resetBookingFields = () => {
+        setBookingBay('1');
+        setBookingDate(getCurrentDay());
+        setBookingFor('self');
+        setBookingMemberId(null);
+        setMembers([]);
+        setPlayingTime('1');
+        setBookingPlayers('1');
+        setBookingPlayersData([
+            { label: 'Single Member', value: '1' },
+            { label: 'Member with 1 Guest - $10', value: '2' }
+        ]);
+        setStartTime(null);
+        setEndTime(null);
+        setJoin(false);
+        setJoinEventId('');
+        setJoinEventPeople(0);
+    };
+
+    const updateBookedTimeslots = (newEvent) => {
+        let currTimeslots = timeslots;
+        const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.toLocaleTimeString() === new Date(newEvent.effective_start_time).toLocaleTimeString());
+
+        // iterate through each hour in timeslot and set booked flag
+        for(let i = 0; i < newEvent.effective_hours; i++){
+            // update timeslot record
+            const currTimeslotIndex = timeslotIndex + i;
+            const currTimeslot = currTimeslots[currTimeslotIndex];
+            if(currTimeslot){ 
+                // update bay timeslot to booked
+                if(newEvent.bay == 1){
+                    currTimeslot.bay1_booked = true;
+                } else {
+                    currTimeslot.bay2_booked = true;
+                }
+            }
         }
 
-        /*setEvents(events.push({
-            bay: bookingBay,
-            members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
+        setTimeslots([...currTimeslots]);
+    };
+
+    // populate other member when admin books for another member
+    const setOtherMember = async (memberId) => {
+        setBookingMemberId(memberId);
+        setBookingMember(await userService.getById(memberId));
+    };
+
+    const addEvent = async () => {
+        if(bookingFor === 'other' && isNull(bookingMemberId)){
+            alert("Please select a member to book a slot for.");
+        }
+        
+        if (isNull(startTime) || isNull(endTime)) {
+            alert ("Please select a start/end time.");
+        }
+
+        // only add event if all required fields are populated
+        if((bookingFor === 'self' || !isNull(bookingMemberId)) && !isNull(startTime) && !isNull(endTime)){
+            // build event
+            const event = {
+                bay: parseInt(bookingBay),
+                members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
+                guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
+                hours: parseInt(playingTime),
+                date: bookingDate,
+                startTime: new Date(startTime),
+                endTime: new Date(endTime),
+                payment: 'none',
+            };
+            
+            // add event to database
+            let createdEventId = await eventService.addEvent(event);
+
+            // add event to current view (bypass a data refresh)
+            if(bookingDate.getTime() === date.getTime() || new Date(endTime).toDateString() == date.toDateString()){
+                event.id = createdEventId;
+                await addEventToDisplay(event);
+            }
+
+
+            //console.log("created Event Id: ", createdEventId);
+
+            close();
+            resetBookingFields();
+
+            // process payment
+            let priceId = getPriceId();
+            // bill only if required
+            if(priceId !== '0'){
+                const customerId = bookingFor === 'self' ? user.customerId : bookingMember.customerId;
+
+                subscriptionService
+                    .billForEvent(customerId, priceId, "payment", createdEventId, false, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1)
+                    .then((x) => {
+                        window.location.assign(x);
+                    });
+            } else {
+                alert("Event created.");
+            }
+        }
+    };
+
+    // handles updating an event when people join it
+    const joinEvent = async () => {
+        const update = {
+            member: { id: user.id, firstName: user.firstName, lastName: user.lastName },
             guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
-            hours: parseInt(playingTime),
-            date: bookingDate,
-            start_time: startTime,
-            end_time: endTime,
-            effective_hours: parseInt(playingTime),
-            effective_start_time: startTime,
-            effective_end_time: endTime,
-        }));*/
+        };
+
+        // update view
+        setEvents(events.map((event) => {
+            if(event.id === joinEventId){
+                return { ...event, members: [...event.members, update.member], guests: event.guests + parseInt(bookingPlayers) - 1 };
+            } else {
+                return { ...event };
+            }
+        }));
+
+        // update event in database
+        await eventService.update(joinEventId, update);
 
         close();
+        resetBookingFields();
+
+        // process payment
+        let priceId = getPriceId();
+        // bill only if required
+        if(priceId !== '0'){
+            const customerId = user.customerId;
+
+            subscriptionService
+                .billForEvent(customerId, priceId, "payment", joinEventId, true, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1)
+                .then((x) => {
+                    window.location.assign(x);
+                });
+        } else {
+            alert("Event created.");
+        }
     };
-    
+
+    const getPriceId = () => {
+        let priceId = '0';
+        if(playingTime == '1'){
+            if(bookingPlayers == '2'){
+                priceId = 'price_1PGOs6LcjY6vEoOvTeJZBYdl' // TEST: price_1PGOs6LcjY6vEoOvTeJZBYdl, LIVE: price_1PGOBwLcjY6vEoOvDlvcNDZn
+            }
+        } else if(playingTime == '2'){
+            if(bookingPlayers == '2'){
+                priceId = 'price_1PLCd5LcjY6vEoOv65shHHWT'; // TEST: price_1PLCd5LcjY6vEoOv65shHHWT, LIVE: price_1PGOCULcjY6vEoOvlrTdXOku
+            } else if(bookingPlayers == '3'){
+                priceId = 'price_1PGOCmLcjY6vEoOvIG7332Wp';
+            } else if(bookingPlayers == '4'){
+                priceId = 'price_1PGODALcjY6vEoOv9xLJjlov';
+            }
+        } else {
+            if(bookingPlayers == '2'){
+                priceId = 'price_1PGODhLcjY6vEoOvsiQTUCTf';
+            } else if(bookingPlayers == '3'){
+                priceId = 'price_1PGODxLcjY6vEoOvCZPBmACt';
+            } else if(bookingPlayers == '4'){
+                priceId = 'price_1PGOEELcjY6vEoOvOgY2wdcu';
+            }
+        }
+
+        return priceId;
+    };
+
+    // checks if the event can be joined
+    const canJoin = (hours, people) => {
+        if(hours == 1 || people == 4){
+            return false;
+        } else {
+            return true;
+        }
+    };
+
     const schedule = timeslots.filter((item) => item.display === true).map((timeslot, index) => (
         <div key={timeslot.time} className={`${classes.schedule} ${ index == 0 ? classes.scheduleFirst : '' }`}>
             <div className={`${classes.scheduleTitle} ${index == 0 ? classes.scheduleTitleFirst : ''}`}>
@@ -382,12 +731,25 @@ export default function Calendar({ events: data }) {
             <div className={`${classes.spacer} ${ index == 23 ? classes.bottomGrid : '' }`}>&nbsp;</div>
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
-            {events && events.filter(event => event.effective_start_time.toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
-                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == '2' && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        <span className="fw-bold">{event.members.map((m, index) => {
-                            return <span key={index}>{m.firstName} {m.lastName}</span>
-                        })}</span> {event.guests + 1}
-                        <br/><span className={classes.timeBlock}>{printTime(event.start_time.toLocaleTimeString()) + ' - ' + printTime(event.end_time.toLocaleTimeString())}</span>
+            {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
+                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
+                        { canJoin(event.hours, event.members.length + event.guests) && !event.members.some(member => member.id === user.id) ? 
+                            <Button onClick={async () => {
+                                if(await userService.canAddEvent(user.id)){
+                                    setJoin(true);
+                                    setJoinEventId(event.id);
+                                    setJoinEventPeople(event.members.length + event.guests);
+                                    setPlayingTime(event.hours.toString());
+                                    open();
+                                } else {
+                                    alert("Can't join event. 3 events already added over the next 60 days.");
+                                }
+                            }} variant="default" style={{ height: 30, width: 30, padding: 0, position: 'absolute', bottom: 5, right: 5 }}>+</Button> 
+                        : '' }
+                        <span className="fw-bold">{event.members.map((member, index) => {
+                            return <span key={index}>{index !== 0 ? ',' : ''} {member.firstName.charAt(0)}. {member.lastName}</span>
+                        })}</span> {event.members.length + event.guests}
+                        <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))
             }
@@ -396,90 +758,122 @@ export default function Calendar({ events: data }) {
 
   return (
     <div>
-        <Modal opened={opened} onClose={close} title="Book a Slot" scrollAreaComponent={ScrollArea.Autosize}>
+        <Modal opened={opened} onClose={() => {
+            close();
+            resetBookingFields();
+        }} title={ join ? "Join a Slot" : "Book a Slot"} scrollAreaComponent={ScrollArea.Autosize}>
             <Stack>
-                <Text size="sm" fw={500}>Pick a Date</Text>
-                <DatePickerInput
-                    leftSection={icon}
-                    leftSectionPointerEvents="none"
-                    placeholder="Pick a Day"
-                    value={bookingDate}
-                    onChange={setBookingDate}
-                />
-
-                <Text size="sm" fw={500}>Whom are you booking for?</Text>
-                <SegmentedControl
-                    value={bookingFor}
-                    onChange={setBookingFor}
-                    data={[
-                        { label: 'Book for Yourself', value: 'self' },
-                        { label: 'Book for Member', value: 'other' }
-                    ]}
-                    color="var(--mantine-color-light-green-6)"
-                />
+                { !join && 
+                <> 
+                    <Text size="sm" fw={500}>Pick a Date</Text>
+                    <DatePickerInput
+                        leftSection={icon}
+                        leftSectionPointerEvents="none"
+                        placeholder="Pick a Day"
+                        value={bookingDate}
+                        onChange={setBookingDate}
+                    />
+                </>
+                }
+                { (user.membership === 'admin' && !join) && 
+                <>
+                    <Text size="sm" fw={500}>Whom are you booking for?</Text>
+                    <SegmentedControl
+                        value={bookingFor}
+                        onChange={setBookingFor}
+                        data={[
+                            { label: 'Book for Yourself', value: 'self' },
+                            { label: 'Book for Member', value: 'other' }
+                        ]}
+                        color="var(--mantine-color-light-green-6)"
+                    />
+                </>
+                }
 
                 <Stack className={`${ bookingFor === 'other' ? '' : 'd-none'}`}>
                     <Text size="sm" fw={500}>Select Member</Text>
                     <Select
                         value={bookingMemberId}
-                        onChange={setBookingMemberId}
+                        onChange={setOtherMember}
                         placeholder='Member Name'
                         limit={10}
                         data={members}
                         searchable
                     />
                 </Stack>
+                { join && 
+                <>
+                    <Text size="sm" fw={500}>Select Number of Players</Text>
+                    <Select
+                        value={bookingPlayers}
+                        onChange={setBookingPlayers}
+                        placeholder='Number of Players'
+                        data={bookingPlayersData}
+                    />
+                    <Text size="sm" fs="italic">Please note that additional fees for guests will apply, determined by the chosen session duration.</Text>
+                </>
+                }
+                { !join && 
+                <>
+                    <Text size="sm" fw={500}>Select Playing Time</Text>
+                    <SegmentedControl
+                        value={playingTime}
+                        onChange={setPlayingTime}
+                        data={[
+                            { label: '1 Hour', value: '1' },
+                            { label: '2 Hours', value: '2' },
+                            { label: '4 Hours', value: '4' }
+                        ]}
+                        color="var(--mantine-color-light-green-6)"
+                    />
+           
+                    <Text size="sm" fw={500}>Select Number of Players</Text>
+                    <Select
+                        value={bookingPlayers}
+                        onChange={setBookingPlayers}
+                        placeholder='Number of Players'
+                        data={bookingPlayersData}
+                    />
+                    <Text size="sm" fs="italic">Please note that additional fees for guests will apply, determined by the chosen session duration.</Text>
+                    
+                    <Text size="sm" fw={500}>Choose Bay</Text>
+                    <SegmentedControl
+                        value={bookingBay}
+                        onChange={setBookingBay}
+                        data={[
+                            { label: 'Bay 1', value: '1' },
+                            { label: 'Bay 2', value: '2' }
+                        ]}
+                        color="var(--mantine-color-light-green-6)"
+                    />
 
-                <Text size="sm" fw={500}>Select Playing Time</Text>
-                <SegmentedControl
-                    value={playingTime}
-                    onChange={setPlayingTime}
-                    data={[
-                        { label: '1 Hour', value: '1' },
-                        { label: '2 Hours', value: '2' },
-                        { label: '4 Hours', value: '4' }
-                    ]}
-                    color="var(--mantine-color-light-green-6)"
-                />
-
-                <Text size="sm" fw={500}>Select Number of Players</Text>
-                <Select
-                    value={bookingPlayers}
-                    onChange={setBookingPlayers}
-                    placeholder='Number of Players'
-                    data={bookingPlayersData}
-                />
-                <Text size="sm" fs="italic">Please note that additional fees for guests will apply, determined by the chosen session duration.</Text>
-                
-                <Text size="sm" fw={500}>Choose Bay</Text>
-                <SegmentedControl
-                    value={bookingBay}
-                    onChange={setBookingBay}
-                    data={[
-                        { label: 'Bay 1', value: '1' },
-                        { label: 'Bay 2', value: '2' }
-                    ]}
-                    color="var(--mantine-color-light-green-6)"
-                />
-
-                <Text size="sm" fw={500}>Select Booking Time</Text>
-                <Select
-                    value={startTime}
-                    onChange={setStartTime}
-                    placeholder='Start Time'
-                    data={getStartTimes()}
-                />
-                <Select
-                    value={endTime}
-                    onChange={setEndTime}
-                    placeholder='End Time'
-                    data={[{value: '1', label: 'Enabled'},{value: '2', label: 'Disabled', disabled: true}]}
-                />
+                    <Text size="sm" fw={500}>Select Booking Time</Text>
+                    <Select
+                        value={startTime}
+                        onChange={(value) => {
+                            setStartTime(value);
+                            autosetEndTime(value);
+                        }}
+                        placeholder='Start Time'
+                        data={startTimes}
+                    />
+                    <Select
+                        value={endTime}
+                        onChange={setEndTime}
+                        placeholder='End Time'
+                        data={endTimes}
+                        disabled
+                    />
+                </>
+                }
                 <Group justify='space-between'>
-                    <Button color="red" onClick={close}>
+                    <Button color="red" onClick={() => {
+                        close();
+                        resetBookingFields();  
+                    }}>
                         Cancel
                     </Button>
-                    <Button color="var(--mantine-color-light-green-6)" onClick={addEvent}>
+                    <Button color="var(--mantine-color-light-green-6)" onClick={ join ? joinEvent : addEvent}>
                         Confirm
                     </Button>
                 </Group>
@@ -487,16 +881,28 @@ export default function Calendar({ events: data }) {
         </Modal>
         <div className={classes.menuBar}>
             <Group justify='space-between' className={classes.menuGroup}>
-                <Button onClick={open} color="var(--mantine-color-light-green-6)">
+                <Button onClick={async () => {
+                    if(await userService.canAddEvent(user.id)){
+                        setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
+                        open();
+                    } else {
+                        alert("Can't add event. 3 events already added over the next 60 days.");
+                    }
+                }} color="var(--mantine-color-light-green-6)">
                     Book a Slot
                 </Button>
-                <DatePickerInput
-                    leftSection={icon}
-                    leftSectionPointerEvents="none"
-                    placeholder="Pick a Day"
-                    value={date}
-                    onChange={setDate}
-                />
+                <Group>
+                    <Button onClick={() => setDate(getCurrentDay())} variant="default">
+                        Today
+                    </Button>
+                    <DatePickerInput
+                        leftSection={icon}
+                        leftSectionPointerEvents="none"
+                        placeholder="Pick a Day"
+                        value={date}
+                        onChange={setDate}
+                    />
+                </Group>
                 <SegmentedControl value={view} onChange={setView} data={['Bay 1', 'Bay 2', 'Both']} />
                 <Group>
                     <Button color="var(--mantine-color-light-green-6)" variant="light" onClick={() => setDate(dayjs(date).subtract(1, 'days').toDate())}>
@@ -509,13 +915,18 @@ export default function Calendar({ events: data }) {
             </Group>
             <Stack className={classes.menuStack}>
                 <Group justify='space-between'>
-                    <DatePickerInput
-                        leftSection={icon}
-                        leftSectionPointerEvents="none"
-                        placeholder="Pick a Day"
-                        value={date}
-                        onChange={setDate}
-                    />
+                    <Group>
+                        <Button onClick={() => setDate(getCurrentDay())} variant="default">
+                            Today
+                        </Button>
+                        <DatePickerInput
+                            leftSection={icon}
+                            leftSectionPointerEvents="none"
+                            placeholder="Pick a Day"
+                            value={date}
+                            onChange={setDate}
+                        />
+                    </Group>
                     <Group>
                         <Button color="var(--mantine-color-light-green-6)" variant="light" onClick={() => setDate(dayjs(date).subtract(1, 'days').toDate())}>
                             <IconChevronLeft style={{ width: rem(18), height: rem(18) }} stroke={1.5} />

@@ -5,15 +5,15 @@ const { serverRuntimeConfig } = getConfig();
 const Schema = mongoose.Schema;
 
 try {
-    //mongoose.connect(process.env.NEXT_PUBLIC_MONGODB_URI || serverRuntimeConfig.connectionString);
-    mongoose.connect(process.env.MONGODB_URI);
+    mongoose.connect(process.env.NEXT_PUBLIC_MONGODB_URI);
     mongoose.Promise = global.Promise;
 } catch (error){
     throw 'Can not connect to database';
 }
 
 export const db = {
-    User: userModel()
+    User: userModel(),
+    Event: eventModel()
 };
 
 // mongoose models with schema definitions
@@ -27,7 +27,13 @@ function userModel() {
         job: { type: String },
         phone: { type: String },
         photo: { type: String },
-        membership: { type: String }
+        membership: { type: String },
+        accountStatus: { type: String },
+        subscriptionStatus: { type: String },
+        customerId: { type: String },
+        subscriptionId: { type: String },
+        subscriptionDate: { type: Date },
+        subscriptionFrequency: { type: String },
     }, {
         // add createdAt and updatedAt timestamps
         timestamps: true
@@ -43,4 +49,30 @@ function userModel() {
     });
     
     return mongoose.models.User || mongoose.model('User', schema);
+}
+
+function eventModel() {
+    const schema = new Schema({
+        bay: { type: Number, required: true },
+        members: { type: Array, required: true },
+        guests: { type: Number, required: true },
+        hours: { type: Number, required: true },
+        startTime: { type: Date, required: true },
+        endTime: { type: Date, required: true },
+        payment: { type: String },
+        paymentId: { type: String }
+    }, {
+        // add createdAt and updatedAt timestamps
+        timestamps: true
+    });
+
+    schema.set('toJSON', {
+        virtuals: true,
+        versionKey: false,
+        transform: function (doc, ret) {
+            delete ret._id;
+        }
+    });
+    
+    return mongoose.models.Event || mongoose.model('Event', schema);
 }

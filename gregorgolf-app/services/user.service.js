@@ -25,6 +25,7 @@ export const userService = {
     sendPasswordReset,
     addPhoto,
     removePhoto,
+    canAddEvent,
     delete: _delete
 };
 
@@ -36,7 +37,8 @@ async function login(email, password) {
     localStorage.setItem('user', JSON.stringify(user));
 }
 
-function logout() {
+function logout(e) {
+    e.preventDefault();
     alertService.clear();
     // remove user from local storage, publish null to user subscribers and redirect to login page
     localStorage.removeItem('user');
@@ -79,6 +81,11 @@ async function update(id, params) {
 
         // publish updated user to subscribers
         userSubject.next(user);
+
+        // hard reload page if admin user changes themselves to a user (disables access)
+        if(params.membership && params.membership === 'user'){
+            window.location.href = '/';
+        }
     }
 }
 
@@ -116,12 +123,23 @@ async function removePhoto(image, id) {
     }
 }
 
+// can add an event if there is less than 3 events active in the next 60 days
+async function canAddEvent(id){
+    const numEvents = await fetchWrapper.get(`${baseUrl}/events/${id}`);
+
+    if(numEvents < 3){
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // prefixed with underscored because delete is a reserved word in javascript
 async function _delete(id) {
     await fetchWrapper.delete(`${baseUrl}/${id}`);
 
     // auto logout if the logged in user deleted their own record
-    if (id === userSubject.value.id) {
+    if (id === userSubject.value?.id) {
         logout();
     }
 }

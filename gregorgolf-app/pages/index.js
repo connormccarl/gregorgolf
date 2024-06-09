@@ -20,14 +20,16 @@ export default function Home() {
 const loadData = async () => {
     let todaysEvents;
 
-    await eventService.getByDate()
+    await eventService.getByDate(new Date().toISOString())
         .then(x => todaysEvents = x);
 
     todaysEvents.map((event) => {
         // calculate effective start time
-        let currStartTime = new Date(event.start_time.getTime());
+        let currStartTime = new Date(event.startTime);
         let currHours = event.hours;
-        while(currStartTime < new Date(new Date('2024-04-05T08:00:00.000Z').setHours(0,0,0,0))){
+
+        // TEST VALUE: '2024-04-05T08:00:00.000Z'
+        while(currStartTime < new Date(new Date().setHours(0,0,0,0))){
             // add an hour
             currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
             currHours -= 1;
@@ -35,8 +37,10 @@ const loadData = async () => {
         event.effective_start_time = currStartTime;
         
         // calculate effective end time
-        let currEndTime = new Date(event.end_time.getTime());
-        while(currEndTime > new Date(new Date('2024-04-05T08:00:00.000Z').setHours(24,0,0,0))){
+        let currEndTime = new Date(event.endTime);
+
+        // TEST VALUE: '2024-04-05T08:00:00.000Z'
+        while(currEndTime > new Date(new Date().setHours(24,0,0,0))){
             currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
             currHours -= 1;
         }

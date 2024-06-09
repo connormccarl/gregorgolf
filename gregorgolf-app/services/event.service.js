@@ -6,83 +6,112 @@ import { alertService } from './alert.service';
 
 const { publicRuntimeConfig } = getConfig();
 
-//const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
-const baseUrl = 'https://gregor-golf.vercel.app/api/users';
+const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/events`;
 
 export const eventService = {
+    addEvent,
     getByDate,
     getNextDayAvailability,
+    getAll,
+    getByMember,
+    update,
+    delete: _delete
 };
 
-async function getByDate(addedEvent) {
-    //await fetchWrapper.post(`${baseUrl}/register`, user);
+async function getAll() {
+    return await fetchWrapper.get(`${baseUrl}`);
+}
+
+async function getByMember(member) {
+    return await fetchWrapper.get(`${baseUrl}/member/${member}`);
+}
+
+async function addEvent(event) {
+    return await fetchWrapper.post(`${baseUrl}/add`, event);
+}
+
+async function getByDate(date) { 
     const events_json = [
         {
-            bay: '1',
+            bay: 1,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 0,
             hours: 3,
-            start_time: new Date('2024-04-05T06:00:00.000Z'),
-            end_time: new Date('2024-04-05T09:00:00.000Z'),
+            startTime: new Date('2024-04-05T06:00:00.000Z'),
+            endTime: new Date('2024-04-05T09:00:00.000Z'),
         },
         {
-            bay: '2',
+            bay: 2,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 3,
             hours: 4,
-            start_time: new Date('2024-04-05T07:00:00.000Z'),
-            end_time: new Date('2024-04-05T11:00:00.000Z'),
+            startTime: new Date('2024-04-05T07:00:00.000Z'),
+            endTime: new Date('2024-04-05T11:00:00.000Z'),
         },
         {
-            bay: '1',
+            bay: 1,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 1,
             hours: 1,
-            start_time: new Date('2024-04-05T11:00:00.000Z'),
-            end_time: new Date('2024-04-05T12:00:00.000Z'),
+            startTime: new Date('2024-04-05T11:00:00.000Z'),
+            endTime: new Date('2024-04-05T12:00:00.000Z'),
         },
         {
-            bay: '1',
+            bay: 1,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 2,
             hours: 1,
-            start_time: new Date('2024-04-05T14:00:00.000Z'),
-            end_time: new Date('2024-04-05T15:00:00.000Z'),
+            startTime: new Date('2024-04-05T14:00:00.000Z'),
+            endTime: new Date('2024-04-05T15:00:00.000Z'),
         },
         {
-            bay: '1',
+            bay: 1,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 2,
             hours: 2,
-            start_time: new Date('2024-04-06T06:00:00.000Z'),
-            end_time: new Date('2024-04-06T08:00:00.000Z'),
+            startTime: new Date('2024-04-06T06:00:00.000Z'),
+            endTime: new Date('2024-04-06T08:00:00.000Z'),
         }
     ];
 
-    //events_json.push(addedEvent);
-
-    return events_json;
+    //return events_json;
+    //return await fetchWrapper.get(`${baseUrl}`);
+    return await fetchWrapper.get(`${baseUrl}/${date}`);
 }
 
-async function getNextDayAvailability(){
+async function getNextDayAvailability(date){
      const events_json = [
         {
-            bay: '1',
+            bay: 1,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 0,
             hours: 3,
-            start_time: new Date('2024-04-06T06:00:00.000Z'),
-            end_time: new Date('2024-04-06T09:00:00.000Z'),
+            startTime: new Date('2024-04-06T06:00:00.000Z'),
+            endTime: new Date('2024-04-06T09:00:00.000Z'),
         },
         {
-            bay: '2',
+            bay: 2,
             members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
             guests: 3,
             hours: 4,
-            start_time: new Date('2024-04-06T07:00:00.000Z'),
-            end_time: new Date('2024-04-06T11:00:00.000Z'),
+            startTime: new Date('2024-04-06T07:00:00.000Z'),
+            endTime: new Date('2024-04-06T11:00:00.000Z'),
         },
      ]
 
-     return events_json;
+     // add one day
+     const currDate = new Date(date);
+     currDate.setDate(currDate.getDate() + 1);
+
+     //return events_json;
+     return await fetchWrapper.get(`${baseUrl}/next/${currDate}`);
+}
+
+async function update(id, params) {
+    await fetchWrapper.put(`${baseUrl}/id/${id}`, params);
+}
+
+// prefixed with underscored because delete is a reserved word in javascript
+async function _delete(id) {
+    await fetchWrapper.delete(`${baseUrl}/id/${id}`);
 }

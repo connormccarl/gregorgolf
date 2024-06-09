@@ -37,6 +37,7 @@
 
     .event4Two {
         width: calc(((100vw - 450px)/8*4) - 4px);
+        background-color: #F22625 !important;
     }
 
     .event1One {
@@ -53,6 +54,7 @@
 
     .event4One {
         width: calc(((100vw - 450px)/4*4) - 4px);
+        background-color: #F22625 !important;
     }
 
     .eventBay1 {
@@ -95,6 +97,7 @@
 
     .event4Two {
         width: calc(((100vw - 125px)/8*4) - 4px);
+        background-color: #F22625 !important;
     }
 
     .event1One {
@@ -111,6 +114,7 @@
 
     .event4One {
         width: calc(((100vw - 125px)/4*4) - 4px);
+        background-color: #F22625 !important;
     }
 
     .eventBay1 {

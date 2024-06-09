@@ -1,14 +1,17 @@
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
+import { Checkbox, Group } from '@mantine/core';
 
 import { Layout } from 'components/account';
-import { userService, alertService } from 'services';
+import Subscription from '@/components/Subscription';
+
+import { userService, alertService, subscriptionService } from 'services';
 
 export default Register;
-
 function Register() {
     const router = useRouter();
 
@@ -30,11 +33,10 @@ function Register() {
     const { register, handleSubmit, formState } = useForm(formOptions);
     const { errors } = formState;
 
-    function onSubmit(user) {
+    const onSubmit = async (user) => {
         return userService.register(user)
             .then(() => {
-                alertService.success('Registration successful', true);
-                router.push('login');
+                router.push('/account/login?registered=true');
             })
             .catch(alertService.error);
     }
@@ -65,11 +67,13 @@ function Register() {
                             <input name="password" type="password" {...register('password')} className={`form-control ${errors.password ? 'is-invalid' : ''}`} />
                             <div className="invalid-feedback">{errors.password?.message}</div>
                         </div>
-                        <button disabled={formState.isSubmitting} className="btn btn-primary">
-                            {formState.isSubmitting && <span className="spinner-border spinner-border-sm me-1"></span>}
-                            Register
-                        </button>
-                        <Link href="/account/login" className="btn btn-link">Cancel</Link>
+                        <Group>
+                            <button disabled={formState.isSubmitting} className="btn btn-primary">
+                                {formState.isSubmitting && <span className="spinner-border spinner-border-sm me-1"></span>}
+                                Register
+                            </button>
+                            <Link href="/account/login" className="btn btn-link">Cancel</Link>
+                        </Group>
                     </form>
                 </div>
             </div>

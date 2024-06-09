@@ -2,6 +2,7 @@ import getConfig from 'next/config';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from 'helpers/api';
+import Stripe from 'stripe';
 
 const { serverRuntimeConfig } = getConfig();
 const User = db.User;
@@ -17,14 +18,20 @@ export const usersRepo = {
     update,
     updatePassword,
     updatePhoto,
+    activateSubscription,
     delete: _delete
 };
 
 async function authenticate({ email, password }) {
     const user = await User.findOne({ email });
 
-    if (!(user && bcrypt.compareSync(password, user.hash))) {
-        throw 'Email or password is incorrect';
+    if (!user) {
+        throw 'No account with that email. Please check or create one.';
+    }    
+    else if (!bcrypt.compareSync(password, user.hash)) {
+        throw 'Password is incorrect';
+    } else if (user.accountStatus === 'pending') {
+        throw 'Account not approved yet. Please wait.'
     }
 
     // create a jwt token that is valid for 7 days
@@ -58,6 +65,37 @@ async function create(params) {
         throw 'Email "' + params.email + '" is already taken';
     }
 
+    // create admin accounts
+    if(params.email === 'connormccarl@gmail.com'){
+        // create shell Stripe customer for admins
+        try {
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+            const customer = await stripe.customers.create({
+                name: params.firstName + ' ' + params.lastName,
+                email: params.email,
+                address: {
+                    city: 'Lake Orion',
+                    country: 'US',
+                    line1: '169 W. Clarkston Rd.',
+                    postal_code: '48362',
+                    state: 'MI',
+                }
+              });
+            
+            params.customerId = customer.id;
+        } catch(err) {
+            throw 'Error. Unable to create Stripe customer for admin.';
+        }
+
+        params.membership = 'admin';
+        params.accountStatus = 'active';
+        params.subscriptionStatus = 'active';
+    } else {
+        params.membership = 'user';
+        params.accountStatus = 'pending';
+        params.subscriptionStatus = "inactive";
+    }
+
     const user = new User(params);
 
     // hash password
@@ -81,6 +119,13 @@ async function update(id, params) {
     // hash password if it was entered
     if (params.password) {
         params.hash = bcrypt.hashSync(params.password, 10);
+    }
+
+    // cancel subscription in Stripe if subscriptionStatus set to inactive or user made admin
+    if((params.subscriptionStatus && params.subscriptionStatus === 'inactive' && user.subscriptionId) || (params.membership && params.membership === 'admin' && user.subscriptionStatus === 'active' && user.subscriptionId)){
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        await stripe.subscriptions.cancel(user.subscriptionId);
+        params.subscriptionId = null;
     }
 
     // copy params properties to user
@@ -111,6 +156,26 @@ async function updatePassword(email, params) {
     if (params.password) {
         params.hash = bcrypt.hashSync(params.password, 10);
     }
+
+    // copy params properties to user
+    Object.assign(user, params);
+
+    await user.save();
+}
+
+async function activateSubscription(userId, customerId, subscriptionId, subscriptionDate, subscriptionFrequency) {
+    const user = await User.findById(userId);
+
+    // validate
+    if (!user) throw 'User not found';
+
+    let params = {};
+    params.accountStatus = 'active';
+    params.subscriptionStatus = 'active';
+    params.customerId = customerId;
+    params.subscriptionId = subscriptionId;
+    params.subscriptionDate = subscriptionDate;
+    params.subscriptionFrequency = subscriptionFrequency;
 
     // copy params properties to user
     Object.assign(user, params);

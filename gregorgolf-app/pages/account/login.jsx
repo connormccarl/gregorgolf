@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
+
+import Stripe from 'stripe';
 
 import { SimpleGrid, Center, Image, Container, Title } from '@mantine/core';
 import { Layout } from 'components/account';
@@ -15,6 +18,15 @@ export default Login;
 
 function Login() {
     const router = useRouter();
+
+    useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+
+        // redirected from registration
+        if (query.get('registered')) {
+            alertService.success("Registered. You can login once your account is approved.", true);
+        }
+    },[])
 
     // form validation rules 
     const validationSchema = Yup.object().shape({
@@ -32,7 +44,7 @@ function Login() {
         return userService.login(email, password)
             .then(() => {
                 // get return url from query parameters or default to '/'
-                const returnUrl = router.query.returnUrl || '/';
+                const returnUrl = router.query.returnUrl || userService.userValue.accountStatus === 'pending' ? '/subscription' : '/';
                 router.push(returnUrl);
             })
             .catch(alertService.error);
@@ -70,6 +82,7 @@ function Login() {
                 <Image 
                     h={300}
                     src="/full_logo_white.webp"
+                    alt="Gregor Private Golf Club"
                 />
             </Center>
         </SimpleGrid>
