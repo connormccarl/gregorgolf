@@ -82,6 +82,7 @@ function Login() {
                 <Image 
                     h={300}
                     src="/full_logo_white.webp"
+                    alt="Gregor Private Golf Club"
                 />
             </Center>
         </SimpleGrid>

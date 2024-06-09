@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router';
 import { Checkbox, Button, Group, Center, Stack, Loader, TextInput } from '@mantine/core';
 
 import { Layout } from '@/components';
 import Subscription from '@/components/Subscription';
 
 import { subscriptionService, userService, alertService } from '@/services';
-import { useRouter } from 'next/router';
 
-export default function index() {
+export default function Index() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [yearly, setYearly]  = useState(false);

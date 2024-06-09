@@ -2,28 +2,25 @@ import { apiHandler, usersRepo } from 'helpers/api';
 
 import sendMail from "@/helpers/email/gmail";
 import { render } from "@react-email/render";
-import { alertService } from "@/services";
 
-import { PasswordResetEmail } from '@/emails/PasswordResetTemplate';
+import { PasswordResetEmail } from '@/emails/password-reset';
 
 export default apiHandler({
     post: sendEmail,
 });
 
 async function sendEmail(req, res) {
-    const baseUrl = process.env.NODE_ENV == 'PRODUCTION'
-    ? `https://${process.env.PUBLIC_URL}`
-    : 'http://localhost:3001';
+    const baseUrl = process.env.NEXT_PUBLIC_URI;
 
     const toEmail = req.body.email;
     const firstName = req.body.firstName;
-    const link = `${baseUrl}/account/password/${req.body.id}`
+    const resetLink = `${baseUrl}/account/password/${req.body.id}`
 
     // convert email template to raw html
-    const plainText = render(PasswordResetEmail({firstName, link}), {
+    const plainText = render(PasswordResetEmail({firstName, resetLink}), {
         plainText: true
     });
-    const htmlContent = render(PasswordResetEmail({firstName, link}));
+    const htmlContent = render(PasswordResetEmail({firstName, resetLink}));
 
     const options = {
         to: toEmail,
@@ -42,7 +39,6 @@ async function sendEmail(req, res) {
         const messageId = await sendMail(options);
         res.status(200).json({ success: 'true' });
     } catch (e) {
-        alertService.error(e);
-        res.status(404).json({ error: "email not found"});
+        throw e;
     }
 }

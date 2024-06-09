@@ -34,9 +34,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# react email
-/react-email-starter
-
 # google smtp credentials
 /google
 /helpers/email/credentials.json
@@ -44,5 +41,3 @@ next-env.d.ts
 
 # build folders
 *.zip
-
-next.config.js

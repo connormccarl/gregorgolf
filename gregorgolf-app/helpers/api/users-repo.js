@@ -122,7 +122,7 @@ async function update(id, params) {
     }
 
     // cancel subscription in Stripe if subscriptionStatus set to inactive or user made admin
-    if((params.subscriptionStatus && params.subscriptionStatus === 'inactive' && user.subscriptionId) || (params.membership && params.membership === 'admin' && user.subscriptionStatus === 'active')){
+    if((params.subscriptionStatus && params.subscriptionStatus === 'inactive' && user.subscriptionId) || (params.membership && params.membership === 'admin' && user.subscriptionStatus === 'active' && user.subscriptionId)){
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         await stripe.subscriptions.cancel(user.subscriptionId);
         params.subscriptionId = null;
