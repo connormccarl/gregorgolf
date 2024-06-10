@@ -32,7 +32,7 @@ export const PasswordResetEmail = ({
           <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
             <Section className="mt-[32px]">
               <Img
-                src={`${baseUrl}/static/text-logo-green.png`}
+                src={`${baseUrl}/text-logo-green.png`}
                 width="200"
                 height="75"
                 alt="Gregor Golf"

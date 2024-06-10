@@ -35,7 +35,7 @@ yarn-error.log*
 next-env.d.ts
 
 # google smtp credentials
-/google
+/helpers/email/generate
 /helpers/email/credentials.json
 /helpers/email/token.json
 

@@ -5,10 +5,7 @@ import Router from 'next/router';
 import { fetchWrapper } from 'helpers';
 import { alertService } from './alert.service';
 
-const { publicRuntimeConfig } = getConfig();
-
-//const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
-const baseUrl = 'https://gregor-golf.vercel.app/api/users';
+const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
 const userSubject = new BehaviorSubject(typeof window !== 'undefined' && JSON.parse(localStorage.getItem('user')));
 
 export const userService = {
