@@ -6,7 +6,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
-import { userService, eventService, subscriptionService } from 'services';
+import { userService, eventService, subscriptionService, emailService } from 'services';
 
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -112,12 +112,38 @@ export default function Calendar({ events: data }) {
 
             eventService.update(eventId, { payment: 'paid', sessionId: sessionId })
                 .then(() => {
-                    if(query.get('join') === 'true'){
-                        alert("Slot updated.");
-                    } else {
-                        alert("Slot added.");
-                    }
-                    router.push('/');
+                    const userId = query.get('user');
+                    
+                    userService.getById(userId)
+                        .then((currUser) => {
+                            eventService.getById(eventId)
+                                .then((currEvent) => {
+                                    const emailDetails = {
+                                        email: currUser.email,
+                                        firstName: currUser.firstName,
+                                        eventDate: new Date(currEvent.startTime).toDateString(),
+                                        eventTime: printTime(new Date(currEvent.startTime).toLocaleTimeString()),
+                                        eventHours: currEvent.hours,
+                                        eventGuests: currEvent.guests
+                                    };
+
+                                    if(query.get('join') === 'true'){
+                                        emailDetails.eventType = "Joined";
+                                        emailService.sendEventConfirmation(emailDetails)
+                                            .then(() => {
+                                                alert("Slot updated.");
+                                                router.push('/');
+                                            });
+                                    } else {
+                                        emailDetails.eventType = "Added";
+                                        emailService.sendEventConfirmation(emailDetails)
+                                            .then(() => {
+                                                alert("Slot added.");
+                                                router.push('/');
+                                            });
+                                    }
+                                });
+                        });
                 });
         }
 
@@ -611,7 +637,6 @@ export default function Calendar({ events: data }) {
                 members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
                 guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
                 hours: parseInt(playingTime),
-                date: bookingDate,
                 startTime: new Date(startTime),
                 endTime: new Date(endTime),
                 payment: 'none',
@@ -637,14 +662,28 @@ export default function Calendar({ events: data }) {
             // bill only if required
             if(priceId !== '0'){
                 const customerId = bookingFor === 'self' ? user.customerId : bookingMember.customerId;
+                const userId = bookingFor === 'self' ? user.id : bookingMember.id;
 
                 subscriptionService
-                    .billForEvent(customerId, priceId, "payment", createdEventId, false, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1)
+                    .billForEvent(customerId, priceId, "payment", createdEventId, false, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1, userId)
                     .then((x) => {
                         window.location.assign(x);
                     });
             } else {
-                alert("Event created.");
+                const currUser = await userService.getById(bookingFor === 'self' ? user.id : bookingMember.id);
+
+                const emailDetails = {
+                    email: currUser.email,
+                    firstName: currUser.firstName,
+                    eventType: "Added",
+                    eventDate: event.startTime.toDateString(),
+                    eventTime: printTime(event.startTime.toLocaleTimeString()),
+                    eventHours: event.hours,
+                    eventGuests: event.guests
+                };
+
+                await emailService.sendEventConfirmation(emailDetails);
+                alert("Slot created.");
             }
         }
     };
@@ -676,14 +715,28 @@ export default function Calendar({ events: data }) {
         // bill only if required
         if(priceId !== '0'){
             const customerId = user.customerId;
+            const userId = user.id;
 
             subscriptionService
-                .billForEvent(customerId, priceId, "payment", joinEventId, true, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1)
+                .billForEvent(customerId, priceId, "payment", joinEventId, true, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1, userId)
                 .then((x) => {
                     window.location.assign(x);
                 });
         } else {
-            alert("Event created.");
+            const event = await eventService.getById(joinEventId);
+
+            const emailDetails = {
+                email: user.email,
+                firstName: user.firstName,
+                eventType: "Joined",
+                eventDate: new Date(event.startTime).toDateString(),
+                eventTime: printTime(new Date(event.startTime).toLocaleTimeString()),
+                eventHours: event.hours,
+                eventGuests: event.guests
+            };
+
+            await emailService.sendEventConfirmation(emailDetails);
+            alert("Slot joined.");
         }
     };
 

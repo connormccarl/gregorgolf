@@ -9,7 +9,7 @@ import { Checkbox, Group } from '@mantine/core';
 import { Layout } from 'components/account';
 import Subscription from '@/components/Subscription';
 
-import { userService, alertService, subscriptionService } from 'services';
+import { userService, alertService, emailService } from 'services';
 
 export default Register;
 function Register() {
@@ -36,7 +36,11 @@ function Register() {
     const onSubmit = async (user) => {
         return userService.register(user)
             .then(() => {
-                router.push('/account/login?registered=true');
+                emailService.sendAccountRegistration(user)
+                    .then(() => {
+                        router.push('/account/login?registered=true');
+                    })
+                    .catch(alertService.error);
             })
             .catch(alertService.error);
     }

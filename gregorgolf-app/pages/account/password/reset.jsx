@@ -5,7 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 
 import { Layout } from 'components/account';
-import { userService, alertService } from 'services';
+import { userService, emailService, alertService } from 'services';
 
 export default Reset;
 
@@ -29,7 +29,7 @@ function Reset() {
         return userService.getByEmail(user.email)
            .then((x) => {
                reset();
-               userService.sendPasswordReset(x);
+               emailService.sendPasswordReset(x);
                alertService.success('Email sent successfully');
            })
            .catch(alertService.error)

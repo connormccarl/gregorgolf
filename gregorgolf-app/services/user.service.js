@@ -1,5 +1,4 @@
 import { BehaviorSubject } from 'rxjs';
-import getConfig from 'next/config';
 import Router from 'next/router';
 
 import { fetchWrapper } from 'helpers';
@@ -19,7 +18,6 @@ export const userService = {
     update,
     updatePassword,
     getByEmail,
-    sendPasswordReset,
     addPhoto,
     removePhoto,
     canAddEvent,
@@ -60,10 +58,6 @@ async function getById(id) {
 
 async function getByEmail(email) {
     return await fetchWrapper.get(`${baseUrl}/id/${email}`);
-}
-
-async function sendPasswordReset(user){
-    return await fetchWrapper.post(`${baseUrl}/password/reset`, user);
 }
 
 async function updatePassword(email, params) {

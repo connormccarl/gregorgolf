@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { useState, useEffect, useImperativeHandle } from 'react';
+import { useState, useEffect } from 'react';
 import moment from 'moment';
-import { Button, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
-import { IconSend, IconPhoneCall, IconAt, IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
+import { Button, Select, Avatar, Table, Group, Text, rem, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
+import { IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
 
-import { Layout, Alert, Spinner } from 'components';
-import { userService } from 'services';
+import { Layout } from 'components';
+import { userService, emailService } from 'services';
 
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -155,6 +155,15 @@ function Index() {
     const updateAccountStatus = async (id, status) => {
       alertService.clear();
       await userService.update(id, { accountStatus: status });
+
+      if(status === 'active'){
+        await userService.getById(id)
+          .then((user) => {
+            emailService.sendAccountActive(user);
+          })
+          .catch(alertService.error);
+      }
+
       alertService.success("Account Status updated");
     }
 

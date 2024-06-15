@@ -15,6 +15,7 @@ function jwtMiddleware(req, res) {
             /^\/api\/users\/id\/.*/,
             /^\/api\/users\/.*/,
             /^\/api\/subscriptions\/.*/,
+            /^\/api\/emails\/.*/,
         ]
     });
 

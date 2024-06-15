@@ -2,9 +2,18 @@ import { apiHandler, eventsRepo } from 'helpers/api';
 import Stripe from 'stripe';
 
 export default apiHandler({
+    get: getById,
     put: update,
     delete: _delete
 });
+
+async function getById(req, res) {
+    const event = await eventsRepo.getById(req.query.id);
+
+    if (!event) throw 'Event Not Found';
+
+    return res.status(200).json(event);
+}
 
 async function update(req, res) {
     // update if joining an event

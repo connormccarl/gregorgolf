@@ -1,37 +1,35 @@
-import { apiHandler, usersRepo } from 'helpers/api';
+import { apiHandler } from 'helpers/api';
 
 import sendMail from "@/helpers/email/gmail";
 import { render } from "@react-email/render";
 
-import { PasswordResetEmail } from '@/emails/password-reset';
+import { AccountApprovedEmail } from '@/emails/account-approved';
 
 export default apiHandler({
     post: sendEmail,
 });
 
 async function sendEmail(req, res) {
-    const baseUrl = process.env.NEXT_PUBLIC_URI;
-
     const toEmail = req.body.email;
     const firstName = req.body.firstName;
-    const resetLink = `${baseUrl}/account/password/${req.body.id}`
+    const loginLink = process.env.NEXT_PUBLIC_URI + "/account/login";
 
     // convert email template to raw html
-    const plainText = render(PasswordResetEmail({firstName, resetLink}), {
+    const plainText = render(AccountApprovedEmail({firstName, loginLink}), {
         plainText: true
     });
-    const htmlContent = render(PasswordResetEmail({firstName, resetLink}));
+    const htmlContent = render(AccountApprovedEmail({firstName, loginLink}));
 
     const options = {
         to: toEmail,
-        replyTo: 'connormccarl@gmail.com',
-        subject: 'Password Reset 🚀',
+        replyTo: 'jay@gpcgolf.com',
+        subject: 'Gregor Golf - Account Approved',
         text: plainText,
         html: htmlContent,
         textEncoding: 'base64',
         headers: [
             { key: 'X-Application-Developer', value: 'Connor McCarl' },
-            { key: 'X-Application-Version', value: 'v1.0.0.2' },
+            { key: 'X-Application-Version', value: 'v1.0.0' },
         ],
     };
 

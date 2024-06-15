@@ -1,15 +1,10 @@
-import getConfig from 'next/config';
-import Router from 'next/router';
-
 import { fetchWrapper } from 'helpers';
-import { alertService } from './alert.service';
-
-const { publicRuntimeConfig } = getConfig();
 
 const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/events`;
 
 export const eventService = {
     addEvent,
+    getById,
     getByDate,
     getNextDayAvailability,
     getAll,
@@ -20,6 +15,10 @@ export const eventService = {
 
 async function getAll() {
     return await fetchWrapper.get(`${baseUrl}`);
+}
+
+async function getById(id) {
+    return await fetchWrapper.get(`${baseUrl}/id/${id}`);
 }
 
 async function getByMember(member) {
