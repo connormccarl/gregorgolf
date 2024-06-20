@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import moment from 'moment';
-import { Stack, Button, Table, Group, Text, rem, ScrollArea, Loader, UnstyledButton, Select, Switch, Center, keys, Modal, NumberInput, SegmentedControl } from '@mantine/core';
-import { IconSelector, IconChevronDown, IconChevronUp, IconCalendar } from '@tabler/icons-react';
+import { Stack, Button, Table, Group, Text, rem, ScrollArea, TextInput, Loader, UnstyledButton, Select, Switch, Center, keys, Modal, NumberInput, SegmentedControl } from '@mantine/core';
+import { IconSelector, IconChevronDown, IconChevronUp, IconCalendar, IconSearch } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 
@@ -281,6 +281,12 @@ function Index() {
         // close and reset fields
         close();
         resetRestrict();
+
+        // refresh page
+        eventService.getAll().then(x => {
+          setData(modifyData(x));
+          setSortedData(modifyData(x));
+        });
       }
     }
 
@@ -318,8 +324,16 @@ function Index() {
               </Button>
             </Group>
           </Group>
+          <TextInput
+            placeholder="Search by any field"
+            mb="md"
+            leftSection={<IconSearch style={{ width: rem(16), height: rem(16) }} stroke={1.5} />}
+            value={search}
+            onChange={handleSearchChange}
+            className='mt-2'
+          />
           <ScrollArea.Autosize mah={400} >
-            <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1200}>
+            <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1300}>
                 <Table.Tbody>
                     <Table.Tr>
                         <Th

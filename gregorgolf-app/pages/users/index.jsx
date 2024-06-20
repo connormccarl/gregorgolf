@@ -218,7 +218,7 @@ function Index() {
                 value={search}
                 onChange={handleSearchChange}
             />
-            <Table horizontalSpacing="lg" verticalSpacing="xs" miw={1600}>
+            <Table horizontalSpacing="lg" verticalSpacing="xs" miw={1800}>
                 <Table.Tbody>
                     <Table.Tr>
                         <Th
@@ -342,7 +342,7 @@ function Index() {
                                   { user.subscriptionFrequency && (user.subscriptionFrequency === 'month' ? 'Monthly' : 'Yearly') }
                                 </Text>
                               </Table.Td>
-                              <Table.Td>
+                              <Table.Td width={150}>
                                 <Group gap={0} justify="flex-end">
                                     <Link href={`/users/edit/${user.id}`} className="btn btn-sm btn-primary me-1">Edit</Link>
                                     <button onClick={() => deleteUser(user.id)} className="btn btn-sm btn-danger btn-delete-user" style={{ width: '60px' }} disabled={user.isDeleting}>
