@@ -146,8 +146,8 @@ function Index() {
         newRow.startTime = moment(row.startTime).format('hh:mm A');
         newRow.endTime = moment(row.endTime).format('hh:mm A');
         newRow.members = row.members.length.toString();
-        newRow.players = (row.members.length + row.guests).toString();
-        newRow.guests = row.guests.toString();
+        newRow.players = (row.members.length + row.members.reduce((prev, curr) => prev + curr.guests, 0)).toString();
+        newRow.guests = row.members.reduce((prev, curr) => prev + curr.guests, 0).toString();
         newRow.hours = row.hours.toString();
         newRow.createdAt = moment(row.createdAt).format('MMMM Do YYYY, h:mm:ss a');
         newRow.updatedAt = moment(row.updatedAt).format('MMMM Do YYYY, h:mm:ss a');
@@ -187,7 +187,7 @@ function Index() {
             if (x.id === id) { x.isDeleting = true; }
             return x;
         }));
-        eventService.delete(id).then(() => {
+        eventService.delete(id, userService.userValue.id, true).then(() => {
             setSortedData(sortedData => sortedData.filter(x => x.id !== id));
         });
     }
@@ -260,9 +260,6 @@ function Index() {
           eventStart = new Date(startTime);
           eventEnd = new Date (endTime);
         }
-
-        //console.log("hours: ", hours);
-        //console.log("end time: ", eventEnd);
         
         // cancel all existing events
         const eventsToCancel = await eventService.getInRange(eventStart.toISOString(), eventEnd.toISOString(), restrictBay);
@@ -273,8 +270,7 @@ function Index() {
         // add restricted event
         const event = {
           bay: parseInt(restrictBay),
-          members: [{ id: userService.userValue.id, firstName: "Admin", lastName: "Restricted" }],
-          guests: 0,
+          members: [{ id: userService.userValue.id, firstName: "Admin", lastName: "Restricted", guests: 0 }],
           hours: hours,
           startTime: eventStart,
           endTime: eventEnd,
@@ -291,7 +287,7 @@ function Index() {
     const deleteEvents = async (events) => {
       let i= 0;
       while(i<events.length){
-        await eventService.delete(events[i].id);
+        await eventService.delete(events[i].id, userService.userValue.id, true);
         i++;
       }
     }

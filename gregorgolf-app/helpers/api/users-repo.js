@@ -64,7 +64,7 @@ async function create(params) {
     }
 
     // create admin accounts
-    if(params.email === 'connormccarl@gmail.com'){
+    if(params.email === 'connormccarl@gmail.com' || params.email === 'jay@gpcgolf.com'){
         // create shell Stripe customer for admins
         try {
             const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

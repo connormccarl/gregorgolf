@@ -122,7 +122,7 @@ export default function Calendar({ events: data }) {
                                         eventDate: new Date(currEvent.startTime).toDateString(),
                                         eventTime: printTime(new Date(currEvent.startTime).toLocaleTimeString()),
                                         eventHours: currEvent.hours,
-                                        eventGuests: currEvent.guests
+                                        eventGuests: currEvent.members.reduce((prev, curr) => prev + curr.guests,0)
                                     };
 
                                     if(query.get('join') === 'true'){
@@ -151,14 +151,14 @@ export default function Calendar({ events: data }) {
 
             if(query.get('join') === 'true'){
                 // remove event updates if join
-                eventService.update(eventId, { remove: query.get('guests') })
+                eventService.update(eventId, { remove: query.get('user') })
                     .then(() => {
                         alert('Slot not joined. Please complete the payment.');
                         router.push('/');
                     });
             } else {
                 // delete event
-                eventService.delete(eventId)
+                eventService.delete(eventId, query.get('user'), true)
                     .then(() => {
                         alert('Slot not added. Please try again and complete the payment.');
                         router.push('/');
@@ -632,8 +632,7 @@ export default function Calendar({ events: data }) {
             // build event
             const event = {
                 bay: parseInt(bookingBay),
-                members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName }],
-                guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
+                members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 }],
                 hours: parseInt(playingTime),
                 startTime: new Date(startTime),
                 endTime: new Date(endTime),
@@ -663,7 +662,7 @@ export default function Calendar({ events: data }) {
                 const userId = bookingFor === 'self' ? user.id : bookingMember.id;
 
                 subscriptionService
-                    .billForEvent(customerId, priceId, "payment", createdEventId, false, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1, userId)
+                    .billForEvent(customerId, priceId, "payment", createdEventId, false, userId)
                     .then((x) => {
                         window.location.assign(x);
                     });
@@ -677,7 +676,7 @@ export default function Calendar({ events: data }) {
                     eventDate: event.startTime.toDateString(),
                     eventTime: printTime(event.startTime.toLocaleTimeString()),
                     eventHours: event.hours,
-                    eventGuests: event.guests
+                    eventGuests: event.members.reduce((prev, curr) => prev + curr.guests, 0)
                 };
 
                 await emailService.sendEventConfirmation(emailDetails);
@@ -689,14 +688,13 @@ export default function Calendar({ events: data }) {
     // handles updating an event when people join it
     const joinEvent = async () => {
         const update = {
-            member: { id: user.id, firstName: user.firstName, lastName: user.lastName },
-            guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1,
+            member: { id: user.id, firstName: user.firstName, lastName: user.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 },
         };
 
         // update view
         setEvents(events.map((event) => {
             if(event.id === joinEventId){
-                return { ...event, members: [...event.members, update.member], guests: event.guests + parseInt(bookingPlayers) - 1 };
+                return { ...event, members: [...event.members, update.member] };
             } else {
                 return { ...event };
             }
@@ -716,7 +714,7 @@ export default function Calendar({ events: data }) {
             const userId = user.id;
 
             subscriptionService
-                .billForEvent(customerId, priceId, "payment", joinEventId, true, bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1, userId)
+                .billForEvent(customerId, priceId, "payment", joinEventId, true, userId)
                 .then((x) => {
                     window.location.assign(x);
                 });
@@ -730,7 +728,7 @@ export default function Calendar({ events: data }) {
                 eventDate: new Date(event.startTime).toDateString(),
                 eventTime: printTime(new Date(event.startTime).toLocaleTimeString()),
                 eventHours: event.hours,
-                eventGuests: event.guests
+                eventGuests: event.members.reduce((prev, curr) => prev + curr.guests, 0)
             };
 
             await emailService.sendEventConfirmation(emailDetails);
@@ -748,17 +746,17 @@ export default function Calendar({ events: data }) {
             if(bookingPlayers == '2'){
                 priceId = 'price_1PLCd5LcjY6vEoOv65shHHWT'; // TEST: price_1PLCd5LcjY6vEoOv65shHHWT, LIVE: price_1PGOCULcjY6vEoOvlrTdXOku
             } else if(bookingPlayers == '3'){
-                priceId = 'price_1PGOCmLcjY6vEoOvIG7332Wp';
+                priceId = 'price_1PTrfBLcjY6vEoOvZVuHLbcc'; // TEST: price_1PTrfBLcjY6vEoOvZVuHLbcc, LIVE: price_1PGOCmLcjY6vEoOvIG7332Wp
             } else if(bookingPlayers == '4'){
-                priceId = 'price_1PGODALcjY6vEoOv9xLJjlov';
+                priceId = 'price_1PTrfdLcjY6vEoOvIc4lX5j6'; // TEST: price_1PTrfdLcjY6vEoOvIc4lX5j6, LIVE: price_1PGODALcjY6vEoOv9xLJjlov
             }
         } else {
             if(bookingPlayers == '2'){
-                priceId = 'price_1PGODhLcjY6vEoOvsiQTUCTf';
+                priceId = 'price_1PTrg1LcjY6vEoOvAq543ivB'; // TEST: price_1PTrg1LcjY6vEoOvAq543ivB, LIVE: price_1PGODhLcjY6vEoOvsiQTUCTf
             } else if(bookingPlayers == '3'){
-                priceId = 'price_1PGODxLcjY6vEoOvCZPBmACt';
+                priceId = 'price_1PTrgILcjY6vEoOvePTEcff0'; // TEST: price_1PTrgILcjY6vEoOvePTEcff0, LIVE: price_1PGODxLcjY6vEoOvCZPBmACt
             } else if(bookingPlayers == '4'){
-                priceId = 'price_1PGOEELcjY6vEoOvOgY2wdcu';
+                priceId = 'price_1PTrgULcjY6vEoOvnsUisxBJ'; // TEST: price_1PTrgULcjY6vEoOvnsUisxBJ, LIVE: price_1PGOEELcjY6vEoOvOgY2wdcu
             }
         }
 
@@ -783,13 +781,13 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
-                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.guests, event.members[0].lastName)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        { canJoin(event.hours, event.members.length + event.guests) && !event.members.some(member => member.id === user.id) ? 
+                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].lastName)}`} style={{ height: event.effective_hours * 54 - 4 }}>
+                        { canJoin(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0)) && !event.members.some(member => member.id === user.id) ? 
                             <Button onClick={async () => {
                                 if(await userService.canAddEvent(user.id)){
                                     setJoin(true);
                                     setJoinEventId(event.id);
-                                    setJoinEventPeople(event.members.length + event.guests);
+                                    setJoinEventPeople(event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0));
                                     setPlayingTime(event.hours.toString());
                                     open();
                                 } else {
@@ -799,7 +797,7 @@ export default function Calendar({ events: data }) {
                         : '' }
                         <span className="fw-bold">{event.members.map((member, index) => {
                             return <span key={index}>{index !== 0 ? ',' : ''} {member.lastName !== 'Restricted' ? member.firstName.charAt(0) + '. ' + member.lastName : member.lastName}</span>
-                        })}</span> {event.members[0].lastName !== 'Restricted' ? event.members.length + event.guests : ''}
+                        })}</span> {event.members[0].lastName !== 'Restricted' ? event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0) : ''}
                         <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) === '12:00 AM' && printTime(new Date(event.endTime).toLocaleTimeString()) === '12:00 AM' ? 'All Day' : printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))

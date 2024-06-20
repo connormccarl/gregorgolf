@@ -82,8 +82,8 @@ function Index() {
         newRow.startTime = moment(row.startTime).format('hh:mm A');
         newRow.endTime = moment(row.endTime).format('hh:mm A');
         newRow.members = row.members.length.toString();
-        newRow.players = (row.members.length + row.guests).toString();
-        newRow.guests = row.guests.toString();
+        newRow.players = (row.members.length + row.members.reduce((prev, curr) => prev + curr.guests, 0)).toString();
+        newRow.guests = row.members.reduce((prev, curr) => prev + curr.guests, 0).toString();
         newRow.hours = row.hours.toString();
         newRow.createdAt = moment(row.createdAt).format('MMMM Do YYYY, h:mm:ss a');
         newRow.updatedAt = moment(row.updatedAt).format('MMMM Do YYYY, h:mm:ss a');
@@ -97,7 +97,7 @@ function Index() {
             if (x.id === id) { x.isDeleting = true; }
             return x;
         }));
-        eventService.delete(id).then(() => {
+        eventService.delete(id, userService.userValue.id, false).then(() => {
             setSortedData(sortedData => sortedData.filter(x => x.id !== id));
         });
     }

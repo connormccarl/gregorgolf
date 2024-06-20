@@ -39,25 +39,6 @@ async function getInRange(startDate, endDate, bay) {
 }
 
 async function getNextDayAvailability(date){
-     const events_json = [
-        {
-            bay: 1,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 0,
-            hours: 3,
-            startTime: new Date('2024-04-06T06:00:00.000Z'),
-            endTime: new Date('2024-04-06T09:00:00.000Z'),
-        },
-        {
-            bay: 2,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 3,
-            hours: 4,
-            startTime: new Date('2024-04-06T07:00:00.000Z'),
-            endTime: new Date('2024-04-06T11:00:00.000Z'),
-        },
-     ]
-
      // add one day
      const currDate = new Date(date);
      currDate.setDate(currDate.getDate() + 1);
@@ -71,6 +52,6 @@ async function update(id, params) {
 }
 
 // prefixed with underscored because delete is a reserved word in javascript
-async function _delete(id) {
-    await fetchWrapper.delete(`${baseUrl}/id/${id}`);
+async function _delete(id, userId, adminDelete) {
+    await fetchWrapper.delete(`${baseUrl}/id/${id}/${userId}/${adminDelete}`);
 }

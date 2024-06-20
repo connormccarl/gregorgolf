@@ -55,7 +55,6 @@ function eventModel() {
     const schema = new Schema({
         bay: { type: Number, required: true },
         members: { type: Array, required: true },
-        guests: { type: Number, required: true },
         hours: { type: Number, required: true },
         startTime: { type: Date, required: true },
         endTime: { type: Date, required: true },

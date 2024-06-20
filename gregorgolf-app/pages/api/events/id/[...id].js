@@ -21,8 +21,7 @@ async function update(req, res) {
         // add data to existing event if joining an event update
         const event = await eventsRepo.getById(req.query.id);
         const payload = {
-            members: [...event.members, req.body.member],
-            guests: event.guests + req.body.guests
+            members: [...event.members, req.body.member]
         };
 
         await eventsRepo.update(req.query.id, payload);
@@ -33,8 +32,7 @@ async function update(req, res) {
             const event = await eventsRepo.getById(req.query.id);
 
             const payload = {
-                members: [...event.members.toSpliced(-1)],
-                guests: event.guests - req.body.remove
+                members: [...event.members.filter((member) => member.id !== req.body.remove)]
             };
 
             await eventsRepo.update(req.query.id, payload);
@@ -70,6 +68,22 @@ async function update(req, res) {
 }
 
 async function _delete(req, res) {
-    await eventsRepo.delete(req.query.id);
+    const { id } = req.query;
+    const eventId = id[0];
+    const userId = id[1];
+    const adminDelete = id[2];
+
+    // if a joined event, remove member otherwise delete entire event
+    const event = await eventsRepo.getById(eventId);
+    if(adminDelete === 'true' || event.members.length === 1){
+        await eventsRepo.delete(eventId);
+    } else {
+        const payload = {
+            members: [...event.members.filter((member) => member.id !== userId)]
+        };
+
+        await eventsRepo.update(eventId, payload);
+    }
+
     return res.status(200).json({});
 }

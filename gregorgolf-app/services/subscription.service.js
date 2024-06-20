@@ -10,8 +10,8 @@ export const subscriptionService = {
     activateAccount,
 };
 
-async function billForEvent(customerId, priceId, type, eventId, join, guests, userId) {
-    return await fetchWrapper.post(`${baseUrl}/event`, { customerId, priceId, type, eventId, join, guests, userId });
+async function billForEvent(customerId, priceId, type, eventId, join, userId) {
+    return await fetchWrapper.post(`${baseUrl}/event`, { customerId, priceId, type, eventId, join, userId });
 }
 
 async function billForAccount(yearly, userId, discount) {
