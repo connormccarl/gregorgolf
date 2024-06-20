@@ -5,6 +5,7 @@ import { fetchWrapper } from 'helpers';
 import { alertService } from './alert.service';
 
 const baseUrl = `${process.env.NEXT_PUBLIC_API_URI}/users`;
+const appBaseUrl = `${process.env.NEXT_PUBLIC_API_URI}/app`;
 const userSubject = new BehaviorSubject(typeof window !== 'undefined' && JSON.parse(localStorage.getItem('user')));
 
 export const userService = {
@@ -120,8 +121,9 @@ async function removePhoto(image, id) {
 // can add an event if there is less than 3 events active in the next 60 days
 async function canAddEvent(id){
     const numEvents = await fetchWrapper.get(`${baseUrl}/events/${id}`);
+    const numIn60 = await fetchWrapper.get(appBaseUrl);
 
-    if(numEvents < 3){
+    if(numEvents < numIn60){
         return true;
     } else {
         return false;

@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import moment from 'moment';
-import { Button, Container, Select, Avatar, Badge, Title, Table, Group, Text, ActionIcon, Anchor, rem, SimpleGrid, TextInput, ScrollArea, UnstyledButton, Center, keys } from '@mantine/core';
-import { IconSend, IconPhoneCall, IconAt, IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
+import { Stack, Button, Table, Group, Text, rem, ScrollArea, Loader, UnstyledButton, Select, Switch, Center, keys, Modal, NumberInput, SegmentedControl } from '@mantine/core';
+import { IconSelector, IconChevronDown, IconChevronUp, IconCalendar } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
+import { useDisclosure } from '@mantine/hooks';
 
-import { Spinner } from 'components';
+
 import { Layout } from 'components';
 
 import * as XLSX from 'xlsx';
@@ -13,7 +14,18 @@ import { saveAs } from 'file-saver';
 
 import classes from './Index.module.css';
 import '@mantine/dates/styles.css';
-import { userService, alertService, eventService } from '@/services';
+import { alertService, appService, eventService, userService } from '@/services';
+
+const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
+
+const printTime = (timeslot) => {
+  const time = timeslot.split(' ')[0];
+  const meridian = timeslot.split(' ')[1];
+
+  const newTime = time.split(':')[0] + ":" + time.split(':')[1] + ' ' + meridian; 
+
+  return newTime;
+}
 
 export default Index;
 
@@ -43,12 +55,49 @@ function Index() {
     const [reverseSortDirection, setReverseSortDirection] = useState(false);
     const [dateRange, setDateRange] = useState([null, null]);
 
+    // modal
+    const [opened, { open, close }] = useDisclosure(false);
+    const [display, setDisplay] = useState();
+    const [numIn60, setNumIn60] = useState();
+
+    const icon = <IconCalendar style={{ width: rem(18), height: rem(18) }} stroke={1.5} />;
+    const [restrictDate, setRestrictDate] = useState(getCurrentDay());
+    const [restrictBay, setRestrictBay] = useState('1');
+    const [allDay, setAllDay] = useState(false);
+    const [startTime, setStartTime] = useState(null);
+    const [endTime, setEndTime] = useState(null);
+    const [events, setEvents] = useState(null);
+
+    const getTimeslots = (date) => {
+      // calendar timeslots
+      let timeslots_json = [];
+      for(let i = 0; i <= 24; i++){
+          // set display value in booking times for timeslot
+          let displayValue = '';
+          if(i >= 24){
+            displayValue += '(+1) ';
+          }
+
+          // TEST VALUE: '2024-04-05T08:00:00.000Z'
+          displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
+
+          // TEST VALUE: '2024-04-05T08:00:00.000Z'
+          timeslots_json.push({
+              value: new Date(new Date(date).setHours(i,0,0,0)).toISOString(),
+              label: displayValue
+          });
+      }
+
+      return timeslots_json;
+    }
+
+    const [startTimes, setStartTimes] = useState(getTimeslots(restrictDate));
+    const [endTimes, setEndTimes] = useState(getTimeslots(restrictDate));
 
     useEffect(() => {
         eventService.getAll().then(x => {
             setData(modifyData(x));
             setSortedData(modifyData(x));
-            console.log("data: ", modifyData(x));
         });
     }, []);
 
@@ -72,6 +121,15 @@ function Index() {
         }))
      }
     }, [dateRange]);
+
+    // getEndTimes based on startTime selection
+    const getEndTimes = (time) => {
+      const timeslots = getTimeslots(restrictDate);
+      const startIndex = timeslots.findIndex(timeslot => new Date(timeslot.value).getTime() === new Date(time).getTime());
+      const newList = timeslots.slice(startIndex + 1);
+
+      setEndTimes([...newList]);
+    }
 
     // check if value is null
     const isNull = (value) => typeof value === "object" && !value;
@@ -159,16 +217,112 @@ function Index() {
       saveAs(blob, "data.xlsx");
     };
 
+    const resetRestrict = () => {
+      setRestrictDate(getCurrentDay());
+      setRestrictBay('1');
+      setAllDay(false);
+      setStartTime(null);
+      setEndTime(null);
+      setEvents(null);
+    }
+
+    const getEvents = async (startTime, endTime, bay) => {
+      eventService.getInRange(startTime, endTime, bay)
+        .then((results) => setEvents(results));
+    }
+
+    const submitSettings = async () => {
+      await appService.update({ numIn60: numIn60 });
+
+      alertService.success("App settings updated", true);
+
+      close();
+      setDisplay();
+    }
+
+    const submitRestrict = async () => {
+      if(!allDay && (isNull(startTime) || isNull(endTime))){
+        alert("Please set the times for restriction.");
+      } else {
+        let hours;
+        let eventStart;
+        let eventEnd;
+
+        if(allDay){
+          hours = 24;
+          eventStart = new Date(new Date(restrictDate).setHours(0,0,0,0));
+          eventEnd = new Date(new Date(restrictDate).setHours(24,0,0,0));
+        } else {
+          const timeslots = getTimeslots(restrictDate);
+          const startIndex = timeslots.findIndex(timeslot => new Date(timeslot.value).getTime() === new Date(startTime).getTime());
+          const endIndex = timeslots.findIndex(timeslot => new Date(timeslot.value).getTime() === new Date(endTime).getTime());
+          hours = endIndex - startIndex;
+          eventStart = new Date(startTime);
+          eventEnd = new Date (endTime);
+        }
+
+        //console.log("hours: ", hours);
+        //console.log("end time: ", eventEnd);
+        
+        // cancel all existing events
+        const eventsToCancel = await eventService.getInRange(eventStart.toISOString(), eventEnd.toISOString(), restrictBay);
+        if(eventsToCancel.length !== 0){
+          await deleteEvents(eventsToCancel);
+        }
+        
+        // add restricted event
+        const event = {
+          bay: parseInt(restrictBay),
+          members: [{ id: userService.userValue.id, firstName: "Admin", lastName: "Restricted" }],
+          guests: 0,
+          hours: hours,
+          startTime: eventStart,
+          endTime: eventEnd,
+        };
+        await eventService.addEvent(event);
+        alertService.success("Restriction added");
+
+        // close and reset fields
+        close();
+        resetRestrict();
+      }
+    }
+
+    const deleteEvents = async (events) => {
+      let i= 0;
+      while(i<events.length){
+        await eventService.delete(events[i].id);
+        i++;
+      }
+    }
+
     return (
         <Layout>
-            <h1>All Bookings</h1>
+          <h1>All Bookings</h1>
+          <Group justify='space-between'>
             <Group>
               <DatePickerInput type="range" placeholder="Pick date range" clearable allowSingleDateInRange value={dateRange} onChange={setDateRange} />
               <Button onClick={exportData} color="var(--mantine-color-light-green-6)">
                   Export
               </Button>
             </Group>
-            <ScrollArea.Autosize mah={400} >
+            <Group>
+              <Button onClick={async () => {
+                setDisplay('settings');
+                setNumIn60(await appService.getNumIn60());
+                open();
+              }} variant="default">
+                  Edit Settings
+              </Button>
+              <Button onClick={() => {
+                setDisplay('restrict');
+                open();
+              }} color="var(--mantine-color-red-9)">
+                  Restrict Bays
+              </Button>
+            </Group>
+          </Group>
+          <ScrollArea.Autosize mah={400} >
             <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1200}>
                 <Table.Tbody>
                     <Table.Tr>
@@ -303,7 +457,125 @@ function Index() {
                     )}
                 </Table.Tbody>
             </Table>
-        </ScrollArea.Autosize>
+          </ScrollArea.Autosize>
+          <Modal opened={opened} onClose={() => {
+            close();
+            setDisplay();
+            resetRestrict();
+          }} title={ display === 'settings' ? "Edit Settings" : "Restrict a Bay"} scrollAreaComponent={ScrollArea.Autosize} centered>
+            <Stack>
+              { display === 'settings' &&
+              <>
+                <Text size="sm" fw={500}>Number of Bookings in 60 Days</Text>
+                <NumberInput value={numIn60} onChange={setNumIn60} />
+              </>
+              }
+              { display === 'restrict' && 
+              <>
+                <Text size="sm" fw={500}>Pick a Date</Text>
+                <DatePickerInput
+                    leftSection={icon}
+                    leftSectionPointerEvents="none"
+                    placeholder="Pick a Day"
+                    value={restrictDate}
+                    onChange={(value) => {
+                      setEvents(null);
+                      setAllDay(false);
+                      setStartTime(null);
+                      setEndTime(null);
+                      setRestrictDate(value);
+                      setStartTimes(getTimeslots(value));
+                      setEndTimes(getTimeslots(value));
+                    }}
+                />
+
+                <Text size="sm" fw={500}>Choose Bay</Text>
+                <SegmentedControl
+                    value={restrictBay}
+                    onChange={(value) => {
+                      setEvents(null);
+                      setAllDay(false);
+                      setStartTime(null);
+                      setEndTime(null);
+                      setRestrictBay(value);
+                    }}
+                    data={[
+                        { label: 'Bay 1', value: '1' },
+                        { label: 'Bay 2', value: '2' }
+                    ]}
+                    color="var(--mantine-color-light-green-6)"
+                />
+
+                <Text size="sm" fw={500}>All Day?</Text>
+                <Switch 
+                  checked={allDay}
+                  onChange={(event) => {
+                    setAllDay(event.currentTarget.checked);
+                    if(event.currentTarget.checked){
+                      setEvents(null);
+                      getEvents(new Date(new Date(restrictDate).setHours(0,0,0,0)).toISOString(), new Date(new Date(restrictDate).setHours(23,0,0,0)).toISOString(), restrictBay);
+                    } else {
+                      setEvents(null);
+                    }
+                  }} 
+                  color="var(--mantine-color-light-green-6)"
+                />
+
+                { !allDay &&
+                <>
+                  <Text size="sm" fw={500}>Select Restrict Time</Text>
+                  <Select
+                      value={startTime}
+                      onChange={(value) => {
+                        setStartTime(value);
+                        setEndTime(null);
+                        getEndTimes(value);
+                        setEvents(null);
+                      }}
+                      placeholder='Start Time'
+                      data={startTimes}
+                  />
+                  <Select
+                      value={endTime}
+                      onChange={(value) => {
+                        setEndTime(value);
+                        getEvents(new Date(startTime).toISOString(), new Date(value).toISOString(), restrictBay);
+                      }}
+                      placeholder='End Time'
+                      data={endTimes}
+                  />
+                </>
+                }
+                { !events && 
+                  <Center>
+                    <Loader color="lime" type="bars" />
+                  </Center>
+                }
+                { events && (
+                  <Center>
+                    <Text size="sm" fw={500}>Events to Cancel:&nbsp;</Text>
+                    <Text fw={700} color="red">{events.length}</Text>
+                  </Center>
+                )
+                }
+
+              </>
+              }
+
+              <Group justify='space-between'>
+                <Button color="red" onClick={() => {
+                    close();
+                    setDisplay(); 
+                    resetRestrict();
+                }}>
+                    Cancel
+                </Button>
+                <Button color="var(--mantine-color-light-green-6)" onClick={ display === 'settings' ? submitSettings : submitRestrict}>
+                    Confirm
+                </Button>
+              </Group>
+            </Stack>
+          </Modal>
         </Layout>
     );
 }

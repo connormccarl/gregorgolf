@@ -1,13 +1,11 @@
-import getConfig from 'next/config';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from 'helpers/api';
 import Stripe from 'stripe';
 
-const { serverRuntimeConfig } = getConfig();
 const User = db.User;
 
-const secret = process.env.NEXT_PUBLIC_SECRET || serverRuntimeConfig.secret;
+const secret = process.env.NEXT_PUBLIC_SECRET;
 
 export const usersRepo = {
     authenticate,

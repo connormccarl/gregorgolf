@@ -12,6 +12,7 @@ import { loadStripe } from '@stripe/stripe-js';
 
 import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
+import { alertService } from '@/services';
 
 const printTime = (timeslot) => {
     const time = timeslot.split(' ')[0];
@@ -26,10 +27,6 @@ const printTime = (timeslot) => {
 //console.log(events_json);
 
 const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
-
-const stripePromise = loadStripe(
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-);
 
 export default function Calendar({ events: data }) {
     const router = useRouter();
@@ -98,6 +95,7 @@ export default function Calendar({ events: data }) {
 
     // Check to see if this is a redirect back from Stripe Checkout
     useEffect(() => {
+        alertService.clear();
         const query = new URLSearchParams(window.location.search);
 
         // subscription activated
@@ -376,7 +374,7 @@ export default function Calendar({ events: data }) {
         eventService.getNextDayAvailability(new Date().toISOString())
             .then(x => x.forEach((event) => {
                 // find event start timeslot
-                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === event.startTime.getTime());
+                const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === new Date(event.startTime).getTime());
 
                 // iterate through each hour in timeslot and set booked flag
                 for(let i = 0; i < event.hours; i++){
@@ -472,8 +470,8 @@ export default function Calendar({ events: data }) {
     }, [playingTime]);
 
     
-    const getEventWidth = (hours, people) => {
-        if(hours == 1 || people == 4){
+    const getEventWidth = (hours, people, lastName) => {
+        if(hours == 1 || people == 4 || lastName === 'Restricted'){
             return view === 'Both' ? classes.event4Two : classes.event4One;
         } else {
             switch(people){
@@ -785,7 +783,7 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
-                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.guests)}`} style={{ height: event.effective_hours * 54 - 4 }}>
+                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.guests, event.members[0].lastName)}`} style={{ height: event.effective_hours * 54 - 4 }}>
                         { canJoin(event.hours, event.members.length + event.guests) && !event.members.some(member => member.id === user.id) ? 
                             <Button onClick={async () => {
                                 if(await userService.canAddEvent(user.id)){
@@ -795,14 +793,14 @@ export default function Calendar({ events: data }) {
                                     setPlayingTime(event.hours.toString());
                                     open();
                                 } else {
-                                    alert("Can't join event. 3 events already added over the next 60 days.");
+                                    alert("Can't join event. Maximum number of events in 60 days reached.");
                                 }
                             }} variant="default" style={{ height: 30, width: 30, padding: 0, position: 'absolute', bottom: 5, right: 5 }}>+</Button> 
                         : '' }
                         <span className="fw-bold">{event.members.map((member, index) => {
-                            return <span key={index}>{index !== 0 ? ',' : ''} {member.firstName.charAt(0)}. {member.lastName}</span>
-                        })}</span> {event.members.length + event.guests}
-                        <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
+                            return <span key={index}>{index !== 0 ? ',' : ''} {member.lastName !== 'Restricted' ? member.firstName.charAt(0) + '. ' + member.lastName : member.lastName}</span>
+                        })}</span> {event.members[0].lastName !== 'Restricted' ? event.members.length + event.guests : ''}
+                        <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) === '12:00 AM' && printTime(new Date(event.endTime).toLocaleTimeString()) === '12:00 AM' ? 'All Day' : printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))
             }
@@ -939,7 +937,7 @@ export default function Calendar({ events: data }) {
                         setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
                         open();
                     } else {
-                        alert("Can't add event. 3 events already added over the next 60 days.");
+                        alert("Can't add event. Maximum number of events in 60 days reached.");
                     }
                 }} color="var(--mantine-color-light-green-6)">
                     Book a Slot

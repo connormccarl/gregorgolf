@@ -6,6 +6,7 @@ export const eventService = {
     addEvent,
     getById,
     getByDate,
+    getInRange,
     getNextDayAvailability,
     getAll,
     getByMember,
@@ -30,52 +31,11 @@ async function addEvent(event) {
 }
 
 async function getByDate(date) { 
-    const events_json = [
-        {
-            bay: 1,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 0,
-            hours: 3,
-            startTime: new Date('2024-04-05T06:00:00.000Z'),
-            endTime: new Date('2024-04-05T09:00:00.000Z'),
-        },
-        {
-            bay: 2,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 3,
-            hours: 4,
-            startTime: new Date('2024-04-05T07:00:00.000Z'),
-            endTime: new Date('2024-04-05T11:00:00.000Z'),
-        },
-        {
-            bay: 1,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 1,
-            hours: 1,
-            startTime: new Date('2024-04-05T11:00:00.000Z'),
-            endTime: new Date('2024-04-05T12:00:00.000Z'),
-        },
-        {
-            bay: 1,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 2,
-            hours: 1,
-            startTime: new Date('2024-04-05T14:00:00.000Z'),
-            endTime: new Date('2024-04-05T15:00:00.000Z'),
-        },
-        {
-            bay: 1,
-            members: [{ id: '65d6452233d9d567917ca616', firstName: 'Connor', lastName: 'McCarl' }],
-            guests: 2,
-            hours: 2,
-            startTime: new Date('2024-04-06T06:00:00.000Z'),
-            endTime: new Date('2024-04-06T08:00:00.000Z'),
-        }
-    ];
-
-    //return events_json;
-    //return await fetchWrapper.get(`${baseUrl}`);
     return await fetchWrapper.get(`${baseUrl}/${date}`);
+}
+
+async function getInRange(startDate, endDate, bay) {
+    return await fetchWrapper.get(`${baseUrl}/range/${startDate}/${endDate}/${bay}`);
 }
 
 async function getNextDayAvailability(date){

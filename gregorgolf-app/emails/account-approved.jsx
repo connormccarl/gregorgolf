@@ -36,7 +36,7 @@ export const AccountApprovedEmail = ({
                 width="200"
                 height="75"
                 alt="Gregor Golf"
-                className="my-0 mx-auto"
+                className="my-0 mx-auto flex justify-center"
               />
             </Section>
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
