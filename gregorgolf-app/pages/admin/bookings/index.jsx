@@ -332,7 +332,7 @@ function Index() {
             onChange={handleSearchChange}
             className='mt-2'
           />
-          <ScrollArea.Autosize mah={400} >
+          <ScrollArea mah={400} >
             <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1300}>
                 <Table.Tbody>
                     <Table.Tr>
@@ -467,7 +467,7 @@ function Index() {
                     )}
                 </Table.Tbody>
             </Table>
-          </ScrollArea.Autosize>
+          </ScrollArea>
           <Modal opened={opened} onClose={() => {
             close();
             setDisplay();
