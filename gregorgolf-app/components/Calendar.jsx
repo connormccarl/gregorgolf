@@ -86,12 +86,10 @@ export default function Calendar({ events: data }) {
     const [user, setUser] = useState(userService.userValue);
     const [bookingMember, setBookingMember] = useState(null);
 
-    /*
     useEffect(() => {
         console.log("master page events: ", events);
-        console.log("master timeslots: ", timeslots);
+        //console.log("master timeslots: ", timeslots);
     })
-    */
 
     // Check to see if this is a redirect back from Stripe Checkout
     useEffect(() => {
