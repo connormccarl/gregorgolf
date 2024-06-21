@@ -15,6 +15,12 @@
 
 }
 
+.phone {
+  @media (max-width: $mantine-breakpoint-xs) {
+    width: 70px;
+  }
+}
+
 .footer {
   padding-top: var(--mantine-spacing-md);
   margin-top: var(--mantine-spacing-md);

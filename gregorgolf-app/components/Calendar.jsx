@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
 import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
-import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea } from '@mantine/core';
+import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea, Center } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
 import { userService, eventService, subscriptionService, emailService } from 'services';
@@ -940,7 +940,7 @@ export default function Calendar({ events: data }) {
                 }} color="var(--mantine-color-light-green-6)">
                     Book a Slot
                 </Button>
-                <Group>
+                <Group className='gap-1'>
                     <Button onClick={() => setDate(getCurrentDay())} variant="default">
                         Today
                     </Button>
@@ -953,7 +953,7 @@ export default function Calendar({ events: data }) {
                     />
                 </Group>
                 <SegmentedControl value={view} onChange={setView} data={['Bay 1', 'Bay 2', 'Both']} />
-                <Group>
+                <Group className='gap-1'>
                     <Button color="var(--mantine-color-light-green-6)" variant="light" onClick={() => setDate(dayjs(date).subtract(1, 'days').toDate())}>
                         <IconChevronLeft style={{ width: rem(18), height: rem(18) }} stroke={1.5} />
                     </Button>
@@ -964,19 +964,17 @@ export default function Calendar({ events: data }) {
             </Group>
             <Stack className={classes.menuStack}>
                 <Group justify='space-between'>
-                    <Group>
-                        <Button onClick={() => setDate(getCurrentDay())} variant="default">
-                            Today
-                        </Button>
-                        <DatePickerInput
-                            leftSection={icon}
-                            leftSectionPointerEvents="none"
-                            placeholder="Pick a Day"
-                            value={date}
-                            onChange={setDate}
-                        />
-                    </Group>
-                    <Group>
+                    <Button onClick={() => setDate(getCurrentDay())} variant="default">
+                        Today
+                    </Button>
+                    <DatePickerInput
+                        leftSection={icon}
+                        leftSectionPointerEvents="none"
+                        placeholder="Pick a Day"
+                        value={date}
+                        onChange={setDate}
+                    />
+                    <Group className={classes.arrowButtons}>
                         <Button color="var(--mantine-color-light-green-6)" variant="light" onClick={() => setDate(dayjs(date).subtract(1, 'days').toDate())}>
                             <IconChevronLeft style={{ width: rem(18), height: rem(18) }} stroke={1.5} />
                         </Button>
@@ -985,7 +983,14 @@ export default function Calendar({ events: data }) {
                         </Button>
                     </Group>
                 </Group>
-                <Button onClick={open} color="var(--mantine-color-light-green-6)">
+                <Button onClick={async () => {
+                    if(await userService.canAddEvent(user.id)){
+                        setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
+                        open();
+                    } else {
+                        alert("Can't add event. Maximum number of events in 60 days reached.");
+                    }
+                }} color="var(--mantine-color-light-green-6)">
                     Book a Slot
                 </Button>
                 <SegmentedControl value={view} onChange={setView} data={['Bay 1', 'Bay 2', 'Both']} />

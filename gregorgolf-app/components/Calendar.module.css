@@ -14,6 +14,10 @@
     .menuStack {
         display: none;
     }
+
+    .arrowButtons {
+        gap: var(--group-gap, var(--mantine-spacing-md));
+    }
     
     .columnTitleTwo, .scheduleBlockTwo {
         width: calc((100vw - 450px)/2);
@@ -69,6 +73,14 @@
 @media (max-width: $mantine-breakpoint-sm){
     .menuBar {
         width: calc(100vw - 25px);
+    }
+
+    .arrowButtons {
+        gap: 5px;
+    }
+
+    .menuStack {
+        text-align: center;
     }
 
     .menuGroup {

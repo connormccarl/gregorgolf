@@ -302,13 +302,13 @@ function Index() {
         <Layout>
           <h1>All Bookings</h1>
           <Group justify='space-between'>
-            <Group>
+            <Group className='gap-1 mb-2 mb-sm-0'>
               <DatePickerInput type="range" placeholder="Pick date range" clearable allowSingleDateInRange value={dateRange} onChange={setDateRange} />
               <Button onClick={exportData} color="var(--mantine-color-light-green-6)">
                   Export
               </Button>
             </Group>
-            <Group>
+            <Group className='gap-1'>
               <Button onClick={async () => {
                 setDisplay('settings');
                 setNumIn60(await appService.getNumIn60());
