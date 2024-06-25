@@ -1,4 +1,5 @@
 import { db } from 'helpers/api';
+import moment from 'moment';
 
 const Event = db.Event;
 
@@ -115,8 +116,8 @@ async function get60Days(id){
 }
 
 async function getByDate(date) {
-    const startDate = new Date(new Date(date).setHours(0,0,0,0));
-    const endDate = new Date(new Date(date).setHours(23,0,0,0));
+    const startDate = new Date(moment(date).startOf('day'));
+    const endDate = new Date(moment(date).endOf('day'));
     
     return await Event.find({ 
         $or: [
@@ -159,8 +160,8 @@ async function getInRange(start, end, bay) {
 }
 
 async function getNextByDate(date) {
-    const startDate = new Date(new Date(date).setHours(0,0,0,0));
-    const endDate = new Date(new Date(date).setHours(4,0,0,0));
+    const startDate = new Date(moment(date).startOf('day'));
+    const endDate = new Date(moment(date).startOf('day').add(4, 'hours'));
     
     return await Event.find({ 
         $or: [

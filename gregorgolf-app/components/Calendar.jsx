@@ -5,10 +5,9 @@ import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-r
 import { DatePickerInput } from '@mantine/dates';
 import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea, Center } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import moment from 'moment';
 
 import { userService, eventService, subscriptionService, emailService } from 'services';
-
-import { loadStripe } from '@stripe/stripe-js';
 
 import '@mantine/dates/styles.css';
 import classes from './Calendar.module.css';
@@ -182,7 +181,7 @@ export default function Calendar({ events: data }) {
             let currHours = event.hours;
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            while(currStartTime < new Date(new Date(currDate).setHours(0,0,0,0))){
+            while(currStartTime < new Date(moment(currDate).startOf('day'))){
                 // add an hour
                 currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
                 currHours -= 1;
@@ -193,7 +192,7 @@ export default function Calendar({ events: data }) {
             let currEndTime = new Date(event.endTime);
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            while(currEndTime > new Date(new Date(currDate).setHours(24,0,0,0))){
+            while(currEndTime > new Date(moment(currDate).endOf('day'))){
                 currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
                 currHours -= 1;
             }
