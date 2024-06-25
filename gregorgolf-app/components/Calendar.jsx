@@ -25,7 +25,7 @@ const printTime = (timeslot) => {
 //console.log(timeslots_json);
 //console.log(events_json);
 
-const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
+const getCurrentDay = () => new Date(moment().startOf('day'));
 
 export default function Calendar({ events: data }) {
     const router = useRouter();
@@ -44,12 +44,12 @@ export default function Calendar({ events: data }) {
         }
 
         // TEST VALUE: '2024-04-05T08:00:00.000Z'
-        displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
+        displayValue += printTime(new Date(moment(date).startOf('day').add(i, 'hours')).toLocaleTimeString());
 
         // TEST VALUE: '2024-04-05T08:00:00.000Z'
         timeslots_json.push({
             display: i < 24 ? true : false,
-            time: new Date(new Date(date).setHours(i,0,0,0)),
+            time: new Date(moment(date).startOf('day').add(i, 'hours')),
             value: displayValue
         });
     }
@@ -177,23 +177,23 @@ export default function Calendar({ events: data }) {
 
         currEvents.map((event) => {
             // calculate effective start time
-            let currStartTime = new Date(event.startTime);
+            let currStartTime = moment(event.startTime);
             let currHours = event.hours;
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             while(currStartTime < new Date(moment(currDate).startOf('day'))){
                 // add an hour
-                currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
+                currStartTime.add(1, 'hours');
                 currHours -= 1;
             }
             event.effective_start_time = currStartTime;
             
             // calculate effective end time
-            let currEndTime = new Date(event.endTime);
+            let currEndTime = moment(event.endTime);
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             while(currEndTime > new Date(moment(currDate).endOf('day'))){
-                currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
+                currEndTime.subtract(1, 'hours');
                 currHours -= 1;
             }
             event.effective_end_time = currEndTime;
@@ -288,12 +288,12 @@ export default function Calendar({ events: data }) {
             }
 
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            displayValue += printTime(new Date(new Date(currDate).setHours(i,0,0,0)).toLocaleTimeString());
+            displayValue += printTime(new Date(moment(currDate).startOf('day').add(i,'hours')).toLocaleTimeString());
 
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             timeslots.push({
                 display: i < 24 ? true : false,
-                time: new Date(new Date(currDate).setHours(i,0,0,0)),
+                time: new Date(moment(currDate).startOf('day').add(i,'hours')),
                 value: displayValue
             });
         }
