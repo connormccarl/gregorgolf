@@ -190,7 +190,7 @@ export default function Calendar({ events: data }) {
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             while(currStartTime < new Date(new Date(currDate).setHours(0,0,0,0))){
                 // add an hour
-                currStartTime.add(1, 'hours');
+                currStartTime.setTime(currStartTime.getTime() + (1*60*60*1000));
                 currHours -= 1;
             }
             event.effective_start_time = currStartTime;
@@ -200,7 +200,7 @@ export default function Calendar({ events: data }) {
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             while(currEndTime > new Date(new Date(currDate).setHours(24,0,0,0))){
-                currEndTime.subtract(1, 'hours');
+                currEndTime.setTime(currEndTime.getTime() - (1*60*60*1000));
                 currHours -= 1;
             }
             event.effective_end_time = currEndTime;
