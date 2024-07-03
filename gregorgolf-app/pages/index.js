@@ -20,7 +20,7 @@ export default function Home() {
 const loadData = async () => {
     let todaysEvents;
 
-    await eventService.getByDate(new Date().toISOString())
+    await eventService.getByDate(new Date(new Date().setHours(0,0,0,0)).toISOString(), new Date(new Date().setHours(23,0,0,0)).toISOString())
         .then(x => todaysEvents = x);
 
     todaysEvents.map((event) => {
