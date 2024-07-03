@@ -165,7 +165,7 @@ export default function Calendar({ events: data }) {
 
     // update events based on date selection
     useEffect(() => {
-        eventService.getByDate(new Date(new Date(date).setHours(0,0,0,0)).toISOString(), new Date(new Date(date).setHours(23,0,0,0)).toISOString())
+        eventService.getByDate(new Date(new Date(date).setHours(0,0,0,0)).toISOString(), new Date(new Date(date).setHours(24,0,0,0)).toISOString())
             .then(x => {
                 setEvents(calcEffectiveTimes(x, date));
             })
@@ -175,12 +175,12 @@ export default function Calendar({ events: data }) {
         const currEvents = events;
 
         // TESTING
-        console.log({
+        /*console.log({
             effStart: new Date(new Date(currDate).setHours(0,0,0,0)),
             effStartFormat: new Date(new Date(currDate).setHours(0,0,0,0)).toLocaleString(),
             effEnd: new Date(new Date(currDate).setHours(24,0,0,0)),
             effEndFormat: new Date(new Date(currDate).setHours(24,0,0,0)).toLocaleString(),
-        });
+        });*/
 
         currEvents.map((event) => {
             // calculate effective start time
@@ -209,7 +209,9 @@ export default function Calendar({ events: data }) {
             event.effective_hours = currHours;
 
             // TESTING
+            /*
             console.log("event: ", {...event, effStartFormat: event.effective_start_time.toLocaleString(), effEndFormat: event.effective_end_time.toLocaleString()});
+            */
         });
 
         return currEvents;
@@ -226,7 +228,7 @@ export default function Calendar({ events: data }) {
 
         // get events for that day
         let currEvents = [];
-        await eventService.getByDate(new Date(new Date(bookingDate).setHours(0,0,0,0)).toISOString(), new Date(new Date(bookingDate).setHours(23,0,0,0)).toISOString())
+        await eventService.getByDate(new Date(new Date(bookingDate).setHours(0,0,0,0)).toISOString(), new Date(new Date(bookingDate).setHours(24,0,0,0)).toISOString())
             .then(x => currEvents = x);
         
         // calculate effective times
@@ -257,7 +259,7 @@ export default function Calendar({ events: data }) {
 
         
         // update timeslots for next day availability
-        await eventService.getNextDayAvailability(new Date(new Date(bookingDate).setHours(0,0,0,0)).toISOString(), new Date(new Date(bookingDate).setHours(4,0,0,0)).toISOString())
+        await eventService.getByDate(new Date(new Date(bookingDate).setHours(24,0,0,0)).toISOString(), new Date(new Date(bookingDate).setHours(28,0,0,0)).toISOString())
             .then(x => x.forEach((event) => {
                 // find event start timeslot
                 const timeslotIndex = currTimeslots.findIndex(timeslot => timeslot.time.getTime() === new Date(event.startTime).getTime());
@@ -298,12 +300,12 @@ export default function Calendar({ events: data }) {
             }
 
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
+            displayValue += printTime(new Date(new Date(currDate).setHours(i,0,0,0)).toLocaleTimeString());
 
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             timeslots.push({
                 display: i < 24 ? true : false,
-                time: new Date(new Date(date).setHours(i,0,0,0)),
+                time: new Date(new Date(currDate).setHours(i,0,0,0)),
                 value: displayValue
             });
         }
@@ -378,7 +380,7 @@ export default function Calendar({ events: data }) {
         });
 
         // update booked timeslots into the next day
-        eventService.getNextDayAvailability(new Date(new Date().setHours(0,0,0,0)).toISOString(), new Date(new Date().setHours(4,0,0,0)).toISOString())
+        eventService.getByDate(new Date(new Date().setHours(24,0,0,0)).toISOString(), new Date(new Date().setHours(28,0,0,0)).toISOString())
             .then(x => x.forEach((event) => {
                 // find event start timeslot
                 const timeslotIndex = timeslots_json.findIndex(timeslot => timeslot.time.getTime() === new Date(event.startTime).getTime());

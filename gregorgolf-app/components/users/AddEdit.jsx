@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
-import { Center, Stack, Avatar } from '@mantine/core';
+import { Center, Stack, Avatar, Button } from '@mantine/core';
 
-import { userService, alertService } from 'services';
+import { userService, alertService, subscriptionService } from 'services';
 
 export { AddEdit };
 
@@ -85,6 +85,14 @@ function AddEdit(props) {
         handleUpload(event);
     }
 
+    const manageSubscription = () => {
+        subscriptionService
+            .manageSubscription(user.customerId)
+            .then((x) => {
+                window.location.assign(x);
+            });
+    }
+
     return (
         <Center>
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -157,6 +165,9 @@ function AddEdit(props) {
                     </button>
                     <button onClick={() => reset(formOptions.defaultValues)} type="button" disabled={formState.isSubmitting} className="btn btn-secondary">Reset</button>
                     {props?.admin && <Link href="/users" className="btn btn-link">Cancel</Link>}
+                    <Button onClick={manageSubscription} className='ms-2' color="var(--mantine-color-light-green-6)">
+                        Manage Subscription
+                    </Button>
                 </div>
             </form>
         </Center>

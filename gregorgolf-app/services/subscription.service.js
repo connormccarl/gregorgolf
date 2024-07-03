@@ -8,6 +8,7 @@ export const subscriptionService = {
     billForEvent,
     billForAccount,
     activateAccount,
+    manageSubscription
 };
 
 async function billForEvent(customerId, priceId, type, eventId, join, userId) {
@@ -30,4 +31,8 @@ async function activateAccount(userId, sessionId){
         // publish updated user to subscribers
         userSubject.next(user);
     }
+}
+
+async function manageSubscription(customerId) {
+    return await fetchWrapper.post(`${baseUrl}/manage`, customerId)
 }

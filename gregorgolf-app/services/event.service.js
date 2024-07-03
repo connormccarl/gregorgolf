@@ -7,7 +7,6 @@ export const eventService = {
     getById,
     getByDate,
     getInRange,
-    getNextDayAvailability,
     getAll,
     getByMember,
     update,
@@ -31,26 +30,11 @@ async function addEvent(event) {
 }
 
 async function getByDate(startDate, endDate) { 
-    console.log({
-        start: startDate,
-        end: endDate
-    })
     return await fetchWrapper.get(`${baseUrl}/${startDate}/${endDate}`);
 }
 
 async function getInRange(startDate, endDate, bay) {
     return await fetchWrapper.get(`${baseUrl}/range/${startDate}/${endDate}/${bay}`);
-}
-
-async function getNextDayAvailability(startDate, endDate){
-     // add one day
-     const currStart = new Date(startDate);
-     const currEnd = new Date(endDate);
-     currStart.setDate(currStart.getDate() + 1);
-     currEnd.setDate(currEnd.getDate() + 1);
-
-     //return events_json;
-     return await fetchWrapper.get(`${baseUrl}/next/${currStart}/${currEnd}`);
 }
 
 async function update(id, params) {

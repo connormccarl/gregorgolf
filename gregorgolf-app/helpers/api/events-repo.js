@@ -7,7 +7,6 @@ export const eventsRepo = {
     getAll,
     getByDate,
     getInRange,
-    getNextByDate,
     getByMember,
     update,
     getById,
@@ -119,12 +118,14 @@ async function getByDate(start, end) {
     const endDate = new Date(end);
 
     // TESTING
+    /*
     console.log({
         dayStart: startDate,
         dayStartFormat: startDate.toLocaleString(),
         dayEnd: endDate,
         dayEndFormat: endDate.toLocaleString()
     })
+        */
     
     return await Event.find({ 
         $or: [
@@ -165,25 +166,6 @@ async function getInRange(start, end, bay) {
         
     });
 }
-
-async function getNextByDate(start, end) {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    
-    return await Event.find({ 
-        $or: [
-            { startTime: {
-                $gte: startDate,
-                $lt: endDate
-            }},
-            { endTime: {
-                $gt: startDate,
-                $lte: endDate 
-            }}
-        ]
-    });
-}
-
 
 async function update(id, params) {
     const event = await Event.findById(id);

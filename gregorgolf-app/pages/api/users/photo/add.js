@@ -44,7 +44,7 @@ async function addPhoto(req, res) {
     const id = fields.id[0];
     const filePath = files.image[0].filepath;
     const fileLoc = filePath.substring(filePath.indexOf("\\images"));
-    const publicPath = "http://localhost:3001" + fileLoc.replaceAll("\\","/");
+    const publicPath = process.env.NEXT_PUBLIC_URI + fileLoc.replaceAll("\\","/");
 
     //console.log("file: ", publicPath);
 
