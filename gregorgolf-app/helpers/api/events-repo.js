@@ -116,8 +116,16 @@ async function get60Days(id){
 }
 
 async function getByDate(date) {
-    const startDate = new Date(moment(date).startOf('day'));
-    const endDate = new Date(moment(date).endOf('day'));
+    const startDate = new Date(new Date(date).setHours(0,0,0,0));
+    const endDate = new Date(new Date(date).setHours(24,0,0,0));
+
+    // TESTING
+    console.log({
+        dayStart: startDate,
+        dayStartFormat: startDate.toLocaleString(),
+        dayEnd: endDate,
+        dayEndFormat: endDate.toLocaleString()
+    })
     
     return await Event.find({ 
         $or: [

@@ -5,7 +5,6 @@ import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-r
 import { DatePickerInput } from '@mantine/dates';
 import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea, Center } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import moment from 'moment';
 
 import { userService, eventService, subscriptionService, emailService } from 'services';
 
@@ -25,7 +24,7 @@ const printTime = (timeslot) => {
 //console.log(timeslots_json);
 //console.log(events_json);
 
-const getCurrentDay = () => new Date(moment().startOf('day'));
+const getCurrentDay = () => new Date(new Date().setHours(0,0,0,0));
 
 export default function Calendar({ events: data }) {
     const router = useRouter();
@@ -44,12 +43,12 @@ export default function Calendar({ events: data }) {
         }
 
         // TEST VALUE: '2024-04-05T08:00:00.000Z'
-        displayValue += printTime(new Date(moment(date).startOf('day').add(i, 'hours')).toLocaleTimeString());
+        displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
 
         // TEST VALUE: '2024-04-05T08:00:00.000Z'
         timeslots_json.push({
             display: i < 24 ? true : false,
-            time: new Date(moment(date).startOf('day').add(i, 'hours')),
+            time: new Date(new Date(date).setHours(i,0,0,0)),
             value: displayValue
         });
     }
@@ -86,7 +85,7 @@ export default function Calendar({ events: data }) {
     const [bookingMember, setBookingMember] = useState(null);
 
     useEffect(() => {
-        console.log("master page events: ", events);
+        //console.log("master page events: ", events);
         //console.log("master timeslots: ", timeslots);
     })
 
@@ -175,13 +174,21 @@ export default function Calendar({ events: data }) {
     const calcEffectiveTimes = (events, currDate) => {
         const currEvents = events;
 
+        // TESTING
+        console.log({
+            effStart: new Date(new Date(currDate).setHours(0,0,0,0)),
+            effStartFormat: new Date(new Date(currDate).setHours(0,0,0,0)).toLocaleString(),
+            effEnd: new Date(new Date(currDate).setHours(24,0,0,0)),
+            effEndFormat: new Date(new Date(currDate).setHours(24,0,0,0)).toLocaleString(),
+        });
+
         currEvents.map((event) => {
             // calculate effective start time
-            let currStartTime = moment(event.startTime);
+            let currStartTime = new Date(event.startTime);
             let currHours = event.hours;
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            while(currStartTime < new Date(moment(currDate).startOf('day'))){
+            while(currStartTime < new Date(new Date(currDate).setHours(0,0,0,0))){
                 // add an hour
                 currStartTime.add(1, 'hours');
                 currHours -= 1;
@@ -189,10 +196,10 @@ export default function Calendar({ events: data }) {
             event.effective_start_time = currStartTime;
             
             // calculate effective end time
-            let currEndTime = moment(event.endTime);
+            let currEndTime = new Date(event.endTime);
     
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            while(currEndTime > new Date(moment(currDate).endOf('day'))){
+            while(currEndTime > new Date(new Date(currDate).setHours(24,0,0,0))){
                 currEndTime.subtract(1, 'hours');
                 currHours -= 1;
             }
@@ -200,6 +207,9 @@ export default function Calendar({ events: data }) {
             
             // set effective hours
             event.effective_hours = currHours;
+
+            // TESTING
+            console.log("event: ", {...event, effStartFormat: event.effective_start_time.toLocaleString(), effEndFormat: event.effective_end_time.toLocaleString()});
         });
 
         return currEvents;
@@ -288,12 +298,12 @@ export default function Calendar({ events: data }) {
             }
 
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
-            displayValue += printTime(new Date(moment(currDate).startOf('day').add(i,'hours')).toLocaleTimeString());
+            displayValue += printTime(new Date(new Date(date).setHours(i,0,0,0)).toLocaleTimeString());
 
             // TEST VALUE: '2024-04-05T08:00:00.000Z'
             timeslots.push({
                 display: i < 24 ? true : false,
-                time: new Date(moment(currDate).startOf('day').add(i,'hours')),
+                time: new Date(new Date(date).setHours(i,0,0,0)),
                 value: displayValue
             });
         }
