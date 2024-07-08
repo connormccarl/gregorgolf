@@ -19,7 +19,7 @@ export const userService = {
     update,
     updatePassword,
     getByEmail,
-    addPhoto,
+    getPresignedUrl,
     removePhoto,
     canAddEvent,
     delete: _delete
@@ -84,28 +84,13 @@ async function update(id, params) {
     }
 }
 
-async function addPhoto(file, id) {
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("id", id);
-
-    const photoPath = await fetchWrapper.post(`${baseUrl}/photo/add`, formData);
-    
-    // update stored user if the logged in user updated their own record
-    if (userSubject.value && id === userSubject.value.id) {
-        // update local storage
-        const user = { ...userSubject.value, photo: photoPath };
-        localStorage.setItem('user', JSON.stringify(user));
-
-        // publish updated user to subscribers
-        userSubject.next(user);
-    }
-
-    return photoPath;
+async function getPresignedUrl(fileName, fileType) {
+    return await fetchWrapper.get(`${baseUrl}/photo?fileName=${fileName}&fileType=${fileType}`);
 }
 
-async function removePhoto(image, id) {
-    await fetchWrapper.put(`${baseUrl}/photo/remove`, { id, image });
+async function removePhoto(id, fileName) {
+    // remove from S3 & database
+    await fetchWrapper.delete(`${baseUrl}/photo?id=${id}&fileName=${fileName}`);
 
     // update stored user if the logged in user updated their own record
     if (userSubject.value && id === userSubject.value.id) {

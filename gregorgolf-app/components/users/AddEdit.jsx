@@ -12,7 +12,6 @@ export { AddEdit };
 
 function AddEdit(props) {
     const user = props?.user;
-    const router = useRouter();
     const [image, setImage] = useState(props?.user?.photo);
 
     // form validation rules 
@@ -68,7 +67,28 @@ function AddEdit(props) {
 
             try{
                 if(!file) return;
-                setImage(await userService.addPhoto(file, user.id));
+
+                const fileName = Date.now().toString() + '-' + file.name.replace(" ", "_");
+                const fileType = file.type;
+
+                // get presigned URL from S3
+                const { url } = await userService.getPresignedUrl(fileName, fileType);
+                console.log(url);
+
+                // use presigned URL to upload file
+                const upload = await fetch(url, {
+                    method: 'PUT',
+                    body: file,
+                    headers: { 'Content-Type': fileType },
+                });
+                if(upload.ok){
+                    // save image url
+                    const fileUrl = `https://gregorgolf.s3.us-east-2.amazonaws.com/${fileName}`;
+                    await userService.update(user.id, { photo: fileUrl });
+                    setImage(fileUrl);
+                } else {
+                    alertService.error('Upload failed.');
+                }
             } catch (error) {
                 alertService.error(error);
             }
@@ -76,12 +96,18 @@ function AddEdit(props) {
     }
 
     const removePhoto = async () => {
-        await userService.removePhoto(image, user.id);
+        const n = image.lastIndexOf('/');
+        const fileName = image.substring(n + 1);
+
+        await userService.removePhoto(user.id, fileName);
         setImage(undefined);
     }
 
     const changePhoto = async (event) => {
-        await userService.removePhoto(image, user.id);
+        const n = image.lastIndexOf('/');
+        const fileName = image.substring(n + 1);
+
+        await userService.removePhoto(user.id, fileName);
         handleUpload(event);
     }
 
