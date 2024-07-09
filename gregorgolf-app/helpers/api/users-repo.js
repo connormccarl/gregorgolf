@@ -109,7 +109,10 @@ async function create(params) {
 
 async function update(id, params) {
     const user = await User.findById(id);
-    params.email = params.email.toLowerCase();
+
+    if(params.email){
+        params.email = params.email.toLowerCase();
+    }
 
     // validate
     if (!user) throw 'User not found';

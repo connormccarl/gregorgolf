@@ -21,7 +21,7 @@
   }
 
   @media (max-width: $mantine-breakpoint-xs) {
-    width: 100px;
+    width: 80px;
     text-align: right;
   }
 }
