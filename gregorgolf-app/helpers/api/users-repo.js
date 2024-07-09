@@ -58,6 +58,8 @@ async function getByEmail(email) {
 }
 
 async function create(params) {
+    params.email = params.email.toLowerCase();
+
     // validate
     if (await User.findOne({ email: params.email })) {
         throw 'Email "' + params.email + '" is already taken';
@@ -107,6 +109,7 @@ async function create(params) {
 
 async function update(id, params) {
     const user = await User.findById(id);
+    params.email = params.email.toLowerCase();
 
     // validate
     if (!user) throw 'User not found';

@@ -16,8 +16,13 @@
 }
 
 .phone {
+  a {
+    text-decoration: none;
+  }
+
   @media (max-width: $mantine-breakpoint-xs) {
-    width: 70px;
+    width: 100px;
+    text-align: right;
   }
 }
 

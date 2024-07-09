@@ -85,7 +85,7 @@ export function Layout({children}) {
           />
           <Logo className={classes.logo} />
           <Text span c='white' className={`${classes.phone} me-3`}>
-            Call <Text span fs='italic' c='var(--mantine-color-light-green-5)'>(248) 690-7370</Text>
+            Call <a href="tel:+1(248)690-7370"><Text span fs='italic' c='var(--mantine-color-light-green-5)'>(248) 690-7370</Text></a>
           </Text>
         </Group>
       </AppShell.Header>

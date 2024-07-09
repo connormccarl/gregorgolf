@@ -332,7 +332,7 @@ function Index() {
             onChange={handleSearchChange}
             className='mt-2'
           />
-          <ScrollArea mah={400} >
+          <ScrollArea h={300} type='always'>
             <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1300}>
                 <Table.Tbody>
                     <Table.Tr>
