@@ -41,7 +41,7 @@ function Login() {
 
     function onSubmit({ email, password }) {
         alertService.clear();
-        return userService.login(email, password)
+        return userService.login(email.toLowerCase(), password)
             .then(() => {
                 // get return url from query parameters or default to '/'
                 const returnUrl = router.query.returnUrl || userService.userValue.accountStatus === 'pending' ? '/subscription' : '/';
