@@ -9,6 +9,7 @@ export const eventsRepo = {
     getInRange,
     getByMember,
     update,
+    isBookedInOtherBay,
     getById,
     get60Days,
     delete: _delete
@@ -111,6 +112,33 @@ async function get60Days(id){
     .catch(err => {
         throw 'Error getting events in next 60 days.'; 
     });
+}
+
+async function isBookedInOtherBay(userId, bay, time){
+    const currTime = new Date(time);
+
+    const isFound = await Event.findOne({
+        bay: bay,
+        $and: [
+            {
+                startTime: {
+                    $lte: currTime
+                }
+            },
+            {
+                endTime: {
+                    $gt: currTime
+                }
+            }
+        ],
+        "members.id": userId
+    });
+
+    if(isFound){
+        return true;
+    } else {
+        return false;
+    }
 }
 
 async function getByDate(start, end) {

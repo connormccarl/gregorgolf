@@ -9,6 +9,7 @@ export const eventService = {
     getInRange,
     getAll,
     getByMember,
+    isBookedInOtherBay,
     update,
     delete: _delete
 };
@@ -35,6 +36,11 @@ async function getByDate(startDate, endDate) {
 
 async function getInRange(startDate, endDate, bay) {
     return await fetchWrapper.get(`${baseUrl}/range/${startDate}/${endDate}/${bay}`);
+}
+
+async function isBookedInOtherBay(userId, bay, time){
+    const { isFound } = await fetchWrapper.get(`${baseUrl}/booked?user=${userId}&bay=${bay}&time=${time}`);
+    return isFound;
 }
 
 async function update(id, params) {

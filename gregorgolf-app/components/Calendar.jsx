@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
 import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
-import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea, Center } from '@mantine/core';
+import { Group, Button, Stack, SegmentedControl, Modal, rem, Text, Select, ScrollArea, Center, Loader, Avatar } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
 import { userService, eventService, subscriptionService, emailService } from 'services';
@@ -49,7 +49,8 @@ export default function Calendar({ events: data }) {
         timeslots_json.push({
             display: i < 24 ? true : false,
             time: new Date(new Date(date).setHours(i,0,0,0)),
-            value: displayValue
+            value: displayValue,
+            iso: new Date(new Date(date).setHours(i,0,0,0)).toISOString()
         });
     }
 
@@ -79,6 +80,7 @@ export default function Calendar({ events: data }) {
     const [endTime, setEndTime] = useState(null);
     const [startTimes, setStartTimes] = useState([]);
     const [endTimes, setEndTimes] = useState([]);
+    const [loadingTimes, setLoadingTimes] = useState(false);
 
     // page fields
     const [user, setUser] = useState(userService.userValue);
@@ -282,7 +284,7 @@ export default function Calendar({ events: data }) {
         
         //console.log("current timeslots: ", currTimeslots);
         // set timeslots for booking
-        await setTimeslots(currTimeslots);
+        setTimeslots(currTimeslots);
 
         // set start and end hours
         setStartTime(null);
@@ -504,7 +506,8 @@ export default function Calendar({ events: data }) {
         }
     }
 
-    const getStartTimes = (currTimeslots) => {
+    const getStartTimes = async (currTimeslots) => {
+        setLoadingTimes(true);
         const workingTimeslots = currTimeslots.filter(timeslot => timeslot.display === true);
         const workingDuration = parseInt(playingTime);
         for(let i = 0; i < workingTimeslots.length; i++){
@@ -520,19 +523,25 @@ export default function Calendar({ events: data }) {
             }
             
             // if not available for the entire duration, unavailable
-            if(workingDuration > 1) {
-                for(let x = 1; x < workingDuration; x++){
-                    if(bookingBay == 1){
-                        if(timeslots[i + x].bay1_booked === true){
-                            unavailable = true;
-                        }
-                    } else {
-                        if(timeslots[i + x].bay2_booked === true){
-                            unavailable = true;
-                        }
+            for(let x = 0; x < workingDuration; x++){
+                if(bookingBay == 1){
+                    const currentlyBooked = await eventService.isBookedInOtherBay(user.id, 2, new Date(currTimeslots[i + x].time).toISOString());
+                    //console.log("Date: %s, Bay: %s, Booked: %s", new Date(currTimeslots[i + x].time).toISOString(), 2, currentlyBooked);
+
+                    if((timeslots[i + x].bay1_booked === true) || currentlyBooked){ // check if booked OR currently in a time slot in the other bay
+                        unavailable = true;
+                    }
+                } else {
+                    const currentlyBooked = await eventService.isBookedInOtherBay(user.id, 1, new Date(currTimeslots[i + x].time).toISOString());
+                    //console.log("Date: %s, Bay: %s, Booked: %s", new Date(currTimeslots[i + x].time).toISOString(), 1, currentlyBooked);
+
+                    if((timeslots[i + x].bay2_booked === true) || currentlyBooked){
+                        unavailable = true;
                     }
                 }
             }
+
+
 
             if(bookingBay == 1){
                 workingSlot.bay1_available = !unavailable;
@@ -561,6 +570,8 @@ export default function Calendar({ events: data }) {
 
             return listItem;
         }));
+
+        setLoadingTimes(false);
     }
 
     const getEndTimes = () => {
@@ -641,7 +652,7 @@ export default function Calendar({ events: data }) {
             // build event
             const event = {
                 bay: parseInt(bookingBay),
-                members: bookingFor === 'self' ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 }] : [{ id: bookingMember.id, firstName: bookingMember.firstName, lastName: bookingMember.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 }],
+                members: bookingFor === 'self' ? [{ id: user.id, photo: user.photo, firstName: user.firstName, lastName: user.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 }] : [{ id: bookingMember.id, photo: bookingMember.photo, firstName: bookingMember.firstName, lastName: bookingMember.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 }],
                 hours: parseInt(playingTime),
                 startTime: new Date(startTime),
                 endTime: new Date(endTime),
@@ -697,7 +708,7 @@ export default function Calendar({ events: data }) {
     // handles updating an event when people join it
     const joinEvent = async () => {
         const update = {
-            member: { id: user.id, firstName: user.firstName, lastName: user.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 },
+            member: { id: user.id, photo: user.photo, firstName: user.firstName, lastName: user.lastName, guests: bookingPlayers === '1' ? 0 : parseInt(bookingPlayers) - 1 },
         };
 
         // update view
@@ -804,9 +815,11 @@ export default function Calendar({ events: data }) {
                                 }
                             }} variant="default" style={{ height: 30, width: 30, padding: 0, position: 'absolute', bottom: 5, right: 5 }}>+</Button> 
                         : '' }
-                        <span className="fw-bold">{event.members.map((member, index) => {
-                            return <span key={index}>{index !== 0 ? ',' : ''} {member.lastName !== 'Restricted' ? member.firstName.charAt(0) + '. ' + member.lastName : member.lastName}</span>
-                        })}</span> {event.members[0].lastName !== 'Restricted' ? event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0) : ''}
+                        <span className="fw-bold">{
+                                event.members.map((member, index) => {
+                                    return <span key={index}>{index !== 0 ? ',' : ''} <Avatar size={20} src={member.photo} radius={20} className='d-inline-block align-middle' /> {member.lastName !== 'Restricted' ? member.firstName.charAt(0) + '. ' + member.lastName.substring(0,3) : member.lastName}</span>
+                                })
+                        }</span> {event.members[0].lastName !== 'Restricted' ? event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0) : ''}
                         <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) === '12:00 AM' && printTime(new Date(event.endTime).toLocaleTimeString()) === '12:00 AM' ? 'All Day' : printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))
@@ -906,22 +919,29 @@ export default function Calendar({ events: data }) {
                     />
 
                     <Text size="sm" fw={500}>Select Booking Time</Text>
-                    <Select
-                        value={startTime}
-                        onChange={(value) => {
-                            setStartTime(value);
-                            autosetEndTime(value);
-                        }}
-                        placeholder='Start Time'
-                        data={startTimes}
-                    />
-                    <Select
-                        value={endTime}
-                        onChange={setEndTime}
-                        placeholder='End Time'
-                        data={endTimes}
-                        disabled
-                    />
+                    {loadingTimes ? 
+                        <Center>
+                            <Loader color="lime" type="bars" />
+                        </Center> :
+                        <>
+                            <Select
+                                value={startTime}
+                                onChange={(value) => {
+                                    setStartTime(value);
+                                    autosetEndTime(value);
+                                }}
+                                placeholder='Start Time'
+                                data={startTimes}
+                            />
+                            <Select
+                                value={endTime}
+                                onChange={setEndTime}
+                                placeholder='End Time'
+                                data={endTimes}
+                                disabled
+                            />
+                        </>
+                    }
                 </>
                 }
                 <Group justify='space-between'>
@@ -941,7 +961,7 @@ export default function Calendar({ events: data }) {
             <Group justify='space-between' className={classes.menuGroup}>
                 <Button onClick={async () => {
                     if(await userService.canAddEvent(user.id)){
-                        setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
+                        await setAvailableTimeslots(); // handle timeslots not updating when adding an event then adding another immediately after
                         open();
                     } else {
                         alert("Can't add event. Maximum number of events in 60 days reached.");

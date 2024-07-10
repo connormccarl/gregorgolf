@@ -73,7 +73,6 @@ function AddEdit(props) {
 
                 // get presigned URL from S3
                 const { url } = await userService.getPresignedUrl(fileName, fileType);
-                console.log(url);
 
                 // use presigned URL to upload file
                 const upload = await fetch(url, {
