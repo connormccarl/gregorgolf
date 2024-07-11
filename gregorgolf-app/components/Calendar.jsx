@@ -481,8 +481,8 @@ export default function Calendar({ events: data }) {
     }, [playingTime]);
 
     
-    const getEventWidth = (hours, people, lastName) => {
-        if(hours == 1 || people == 4 || lastName === 'Restricted'){
+    const getEventWidth = (hours, people, firstName) => {
+        if(hours == 1 || people == 4 || firstName === 'Restricted'){
             return view === 'Both' ? classes.event4Two : classes.event4One;
         } else {
             switch(people){
@@ -784,8 +784,8 @@ export default function Calendar({ events: data }) {
     };
 
     // checks if the event can be joined
-    const canJoin = (hours, people) => {
-        if(hours == 1 || people == 4){
+    const canJoin = (hours, people, firstName) => {
+        if(hours == 1 || people == 4 || firstName === 'Restricted'){
             return false;
         } else {
             return true;
@@ -801,8 +801,8 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 1', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
-                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].lastName)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        { canJoin(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0)) && !event.members.some(member => member.id === user.id) ? 
+                    <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].firstName)}`} style={{ height: event.effective_hours * 54 - 4 }}>
+                        { canJoin(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].firstName) && !event.members.some(member => member.id === user.id) ? 
                             <Button onClick={async () => {
                                 if(await userService.canAddEvent(user.id)){
                                     setJoin(true);
@@ -817,9 +817,11 @@ export default function Calendar({ events: data }) {
                         : '' }
                         <span className="fw-bold">{
                                 event.members.map((member, index) => {
-                                    return <span key={index}>{index !== 0 ? ',' : ''} <Avatar size={20} src={member.photo} radius={20} className='d-inline-block align-middle' /> {member.lastName !== 'Restricted' ? member.firstName.charAt(0) + '. ' + member.lastName.substring(0,3) : member.lastName}</span>
+                                    return <span key={index}>{index !== 0 ? ',' : ''} {member.firstName !== 'Restricted' ? <>
+                                            <Avatar size={20} src={member.photo} radius={20} className='d-inline-block align-middle' /> {member.firstName.charAt(0)}. {member.lastName.substring(0,3)}
+                                        </> : member.firstName + ' - ' + member.lastName}</span>
                                 })
-                        }</span> {event.members[0].lastName !== 'Restricted' ? event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0) : ''}
+                        }</span> {event.members[0].firstName !== 'Restricted' ? event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0) : ''}
                         <br/><span className={classes.timeBlock}>{printTime(new Date(event.startTime).toLocaleTimeString()) === '12:00 AM' && printTime(new Date(event.endTime).toLocaleTimeString()) === '12:00 AM' ? 'All Day' : printTime(new Date(event.startTime).toLocaleTimeString()) + ' - ' + printTime(new Date(event.endTime).toLocaleTimeString())}</span>
                     </div>
                 ))

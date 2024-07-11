@@ -67,6 +67,7 @@ function Index() {
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
     const [events, setEvents] = useState(null);
+    const [note, setNote] = useState('');
 
     const getTimeslots = (date) => {
       // calendar timeslots
@@ -224,6 +225,7 @@ function Index() {
       setStartTime(null);
       setEndTime(null);
       setEvents(null);
+      setNote('');
     }
 
     const getEvents = async (startTime, endTime, bay) => {
@@ -270,7 +272,7 @@ function Index() {
         // add restricted event
         const event = {
           bay: parseInt(restrictBay),
-          members: [{ id: userService.userValue.id, firstName: "Admin", lastName: "Restricted", guests: 0 }],
+          members: [{ id: userService.userValue.id, firstName: "Restricted", lastName: note, guests: 0 }],
           hours: hours,
           startTime: eventStart,
           endTime: eventEnd,
@@ -568,6 +570,12 @@ function Index() {
                   </Center>
                 )
                 }
+
+                <Text size="sm" fw={500}>Note</Text>
+                <TextInput 
+                  value={note}
+                  onChange={(event) => setNote(event.currentTarget.value)}
+                />
 
               </>
               }

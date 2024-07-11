@@ -7,7 +7,8 @@ import {
   IconListDetails,
   IconUsers,
   IconLogout,
-  IconCreditCardPay
+  IconCreditCardPay,
+  IconMessages
 } from '@tabler/icons-react';
 import { Logo } from './Logo';
 import { useDisclosure } from '@mantine/hooks';
@@ -24,6 +25,7 @@ const data = [
   { link: '#', label: 'Dashboard', role: 'user' },
   { link: '/', label: 'Booking Calendar', icon: IconGolf, role: 'user' },
   { link: '/bookings', label: 'My Bookings', icon: IconCalendarEvent, role: 'user' },
+  { link: 'https://links.geneva.com/invite/34716fa4-0b17-4bf8-9b96-309b20600f2f', type: 'external', label: 'Discussion Forum', icon: IconMessages, role: 'user' },
   { link: '#', label: 'Admin', role: 'admin'},
   { link: '/admin/bookings', label: 'Manage Bookings', icon: IconListDetails, role: 'admin' },
   { link: '/users', label: 'Manage Members', icon: IconUsers, role: 'admin' },
@@ -54,6 +56,7 @@ export function Layout({children}) {
         onClick={() => {
           setActive(item.link);
         }}
+        target={item.type === 'external' ? '_blank' : '_self'}
       >
         <item.icon className={classes.linkIcon} stroke={1.5} />
         <span>{item.label}</span>
