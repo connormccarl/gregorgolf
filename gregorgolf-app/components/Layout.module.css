@@ -41,9 +41,6 @@
   color: var(--mantine-color-gray-5);
 }
 
-
-
-
 .link {
   display: flex;
   align-items: center;
@@ -56,6 +53,10 @@
 
   @mixin hover {
     background-color: var(--mantine-color-light-green-6);
+    color: var(--mantine-color-white);
+  }
+
+  &:visited {
     color: var(--mantine-color-white);
   }
 

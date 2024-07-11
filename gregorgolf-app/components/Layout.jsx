@@ -54,7 +54,9 @@ export function Layout({children}) {
         href={item.link}
         key={item.label}
         onClick={() => {
-          setActive(item.link);
+          if(!item.type){
+            setActive(item.link);
+          }
         }}
         target={item.type === 'external' ? '_blank' : '_self'}
       >
