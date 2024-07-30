@@ -760,23 +760,23 @@ export default function Calendar({ events: data }) {
         let priceId = '0';
         if(playingTime == '1'){
             if(bookingPlayers == '2'){
-                priceId = 'price_1PGOs6LcjY6vEoOvTeJZBYdl' // TEST: price_1PGOs6LcjY6vEoOvTeJZBYdl, LIVE: price_1PGOBwLcjY6vEoOvDlvcNDZn
+                priceId = 'price_1PGOBwLcjY6vEoOvDlvcNDZn' // TEST: price_1PGOs6LcjY6vEoOvTeJZBYdl, LIVE: price_1PGOBwLcjY6vEoOvDlvcNDZn
             }
         } else if(playingTime == '2'){
             if(bookingPlayers == '2'){
-                priceId = 'price_1PLCd5LcjY6vEoOv65shHHWT'; // TEST: price_1PLCd5LcjY6vEoOv65shHHWT, LIVE: price_1PGOCULcjY6vEoOvlrTdXOku
+                priceId = 'price_1PGOCULcjY6vEoOvlrTdXOku'; // TEST: price_1PLCd5LcjY6vEoOv65shHHWT, LIVE: price_1PGOCULcjY6vEoOvlrTdXOku
             } else if(bookingPlayers == '3'){
-                priceId = 'price_1PTrfBLcjY6vEoOvZVuHLbcc'; // TEST: price_1PTrfBLcjY6vEoOvZVuHLbcc, LIVE: price_1PGOCmLcjY6vEoOvIG7332Wp
+                priceId = 'price_1PGOCmLcjY6vEoOvIG7332Wp'; // TEST: price_1PTrfBLcjY6vEoOvZVuHLbcc, LIVE: price_1PGOCmLcjY6vEoOvIG7332Wp
             } else if(bookingPlayers == '4'){
-                priceId = 'price_1PTrfdLcjY6vEoOvIc4lX5j6'; // TEST: price_1PTrfdLcjY6vEoOvIc4lX5j6, LIVE: price_1PGODALcjY6vEoOv9xLJjlov
+                priceId = 'price_1PGODALcjY6vEoOv9xLJjlov'; // TEST: price_1PTrfdLcjY6vEoOvIc4lX5j6, LIVE: price_1PGODALcjY6vEoOv9xLJjlov
             }
         } else {
             if(bookingPlayers == '2'){
-                priceId = 'price_1PTrg1LcjY6vEoOvAq543ivB'; // TEST: price_1PTrg1LcjY6vEoOvAq543ivB, LIVE: price_1PGODhLcjY6vEoOvsiQTUCTf
+                priceId = 'price_1PGODhLcjY6vEoOvsiQTUCTf'; // TEST: price_1PTrg1LcjY6vEoOvAq543ivB, LIVE: price_1PGODhLcjY6vEoOvsiQTUCTf
             } else if(bookingPlayers == '3'){
-                priceId = 'price_1PTrgILcjY6vEoOvePTEcff0'; // TEST: price_1PTrgILcjY6vEoOvePTEcff0, LIVE: price_1PGODxLcjY6vEoOvCZPBmACt
+                priceId = 'price_1PGODxLcjY6vEoOvCZPBmACt'; // TEST: price_1PTrgILcjY6vEoOvePTEcff0, LIVE: price_1PGODxLcjY6vEoOvCZPBmACt
             } else if(bookingPlayers == '4'){
-                priceId = 'price_1PTrgULcjY6vEoOvnsUisxBJ'; // TEST: price_1PTrgULcjY6vEoOvnsUisxBJ, LIVE: price_1PGOEELcjY6vEoOvOgY2wdcu
+                priceId = 'price_1PGOEELcjY6vEoOvOgY2wdcu'; // TEST: price_1PTrgULcjY6vEoOvnsUisxBJ, LIVE: price_1PGOEELcjY6vEoOvOgY2wdcu
             }
         }
 

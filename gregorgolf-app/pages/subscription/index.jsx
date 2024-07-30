@@ -11,7 +11,7 @@ export default function Index() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [yearly, setYearly]  = useState(false);
-    const [code, setCode] = useState(null);
+    const [code, setCode] = useState('');
 
      // Check to see if this is a redirect back from Stripe Checkout
      useEffect(() => {
@@ -39,19 +39,13 @@ export default function Index() {
     const processPayment = () => {
         setLoading(true);
 
-        let discount;
-        if(code === 'GREGORFRIEND'){
-            discount = true;
-        } else {
-            discount = false;
-        }
-
         // process payment
         subscriptionService
-            .billForAccount(yearly, userService.userValue.id, discount)
+            .billForAccount(yearly, userService.userValue.id, code)
             .then((x) => {
                 window.location.assign(x);
-            });
+            })
+            .catch(alertService.error);
     };
 
   return (
@@ -64,7 +58,7 @@ export default function Index() {
                     Pay
                 </Button>
                 <TextInput placeholder="Discount Code" style={{ width: 150 }} value={code} onChange={(event) => setCode(event.currentTarget.value)} />
-                <Checkbox size="sm" label="Yearly Subscription (save 20%)" checked={yearly} onChange={(event) => setYearly(event.currentTarget.checked)} />
+                <Checkbox size="sm" label="Yearly Subscription (save $200)" checked={yearly} onChange={(event) => setYearly(event.currentTarget.checked)} />
             </Group>
         </Stack>
     </Layout>

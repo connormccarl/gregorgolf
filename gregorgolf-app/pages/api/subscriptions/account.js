@@ -1,3 +1,4 @@
+import { alertService } from '@/services';
 import { apiHandler, usersRepo } from 'helpers/api';
 
 import Stripe from 'stripe';
@@ -15,12 +16,18 @@ async function payment(req, res) {
         // set the subscription to monthly or yearly
         let priceId;
         if(discount){
-            priceId = 'price_1PL8oqLcjY6vEoOvS6T6fj27';
+            if(discount === '22FOUGRG') {
+                priceId = 'price_1PhyQJLcjY6vEoOvVHOG1hXF'; // LIVE: price_1PhyQJLcjY6vEoOvVHOG1hXF
+            } else if(discount === '22FAMGRG') {
+                priceId = 'price_1PGOG5LcjY6vEoOvSQklaAJA'; // TEST: price_1PL8oqLcjY6vEoOvS6T6fj27, LIVE: price_1PGOG5LcjY6vEoOvSQklaAJA
+            } else {
+                priceId = 'price_1PhyRqLcjY6vEoOvVjcRLjzk'; // TEST: price_1PGOrtLcjY6vEoOvQYGI8nNF, LIVE: price_1PhyRqLcjY6vEoOvVjcRLjzk
+            }
         } else {
             if(yearly){
-                priceId = 'price_1PH7RxLcjY6vEoOvq5CcqmSl';
+                priceId = 'price_1PGOHzLcjY6vEoOv3JpVfYmD'; // TEST: price_1PH7RxLcjY6vEoOvq5CcqmSl, LIVE: price_1PGOHzLcjY6vEoOv3JpVfYmD
             } else {
-                priceId = 'price_1PGOrtLcjY6vEoOvQYGI8nNF';
+                priceId = 'price_1PhyRqLcjY6vEoOvVjcRLjzk'; // TEST: price_1PGOrtLcjY6vEoOvQYGI8nNF, LIVE: price_1PhyRqLcjY6vEoOvVjcRLjzk
             }
         }
 
@@ -45,6 +52,11 @@ async function payment(req, res) {
             },
         };
 
+        // add coupon code
+        if(discount && discount === 'GREGOR12'){
+            checkoutBody.discounts = [{ coupon: 'FbEci34p' }];
+        }
+
         // if the customer already exists in Stripe use it (for cancelled then readded subscriptions)
         const user = await usersRepo.getById(userId);
         if(user.customerId){
@@ -60,6 +72,6 @@ async function payment(req, res) {
 
         //return res.status(200).json({});
     } catch (err) {
-        return res.status(err.statusCode || 500).json(err.message);
+        throw err.raw.message;
     }
 }
