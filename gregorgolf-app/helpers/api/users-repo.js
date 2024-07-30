@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 
 const User = db.User;
 
-const secret = process.env.NEXT_PUBLIC_SECRET;
+const secret = process.env.SECRET;
 
 export const usersRepo = {
     authenticate,

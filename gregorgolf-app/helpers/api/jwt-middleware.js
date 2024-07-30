@@ -1,7 +1,7 @@
 import { expressjwt } from 'express-jwt';
 import util from 'util';
 
-const secret = process.env.NEXT_PUBLIC_SECRET;
+const secret = process.env.SECRET;
 
 export { jwtMiddleware };
 
