@@ -8,7 +8,8 @@ import {
   IconUsers,
   IconLogout,
   IconCreditCardPay,
-  IconMessages
+  IconMessages,
+  IconUserQuestion
 } from '@tabler/icons-react';
 import { Logo } from './Logo';
 import { useDisclosure } from '@mantine/hooks';
@@ -26,6 +27,7 @@ const data = [
   { link: '/', label: 'Booking Calendar', icon: IconGolf, role: 'user' },
   { link: '/bookings', label: 'My Bookings', icon: IconCalendarEvent, role: 'user' },
   { link: 'https://links.geneva.com/invite/34716fa4-0b17-4bf8-9b96-309b20600f2f', type: 'external', label: 'Discussion Forum', icon: IconMessages, role: 'user' },
+  { link: 'https://app.waiversign.com/e/64276294da72d0001966df71/doc/64276312da72d0001966e00f?event=none', type: 'external', label: 'Guest Waiver', icon: IconUserQuestion, role: 'user' },
   { link: '#', label: 'Admin', role: 'admin'},
   { link: '/admin/bookings', label: 'Manage Bookings', icon: IconListDetails, role: 'admin' },
   { link: '/users', label: 'Manage Members', icon: IconUsers, role: 'admin' },

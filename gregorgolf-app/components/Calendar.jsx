@@ -677,7 +677,7 @@ export default function Calendar({ events: data }) {
             // process payment
             let priceId = getPriceId();
             // bill only if required
-            if(priceId !== '0'){
+            if(priceId !== '0' && user.membership !== 'admin'){
                 const customerId = bookingFor === 'self' ? user.customerId : bookingMember.customerId;
                 const userId = bookingFor === 'self' ? user.id : bookingMember.id;
 
@@ -729,7 +729,7 @@ export default function Calendar({ events: data }) {
         // process payment
         let priceId = getPriceId();
         // bill only if required
-        if(priceId !== '0'){
+    if(priceId !== '0' && user.membership !== 'admin'){
             const customerId = user.customerId;
             const userId = user.id;
 

@@ -205,12 +205,12 @@ function Index() {
 
     return (
         <Layout>
-            <h1>Users</h1>
-            <Button onClick={exportData} color="var(--mantine-color-light-green-6)" className='ms-2 mb-2'>
-                Export
-            </Button>
+          <h1>Users</h1>
+          <Button onClick={exportData} color="var(--mantine-color-light-green-6)" className='ms-2 mb-2'>
+              Export
+          </Button>
 
-            <ScrollArea>
+          <ScrollArea type='always'>
             <TextInput
                 placeholder="Search by any field"
                 mb="md"

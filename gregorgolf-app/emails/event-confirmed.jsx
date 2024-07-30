@@ -56,6 +56,10 @@ export const EventConfirmedEmail = ({
               <Text className="m-0"><strong>Hours: </strong>{eventHours}</Text>
               <Text className="m-0"><strong>Guests: </strong>{eventGuests}</Text>
             </Section>
+            <Text className="text-black text-[14px] leading-[24px]">
+              If you have first-time guests, please have them sign this waiver!<br/>
+              <strong>https://app.waiversign.com/e/64276294da72d0001966df71/doc/64276312da72d0001966e00f?event=none</strong>
+            </Text>
             <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
             <Text className="text-[#666666] text-[12px] leading-[24px]">
               This booking confirmation was intended for{" "}

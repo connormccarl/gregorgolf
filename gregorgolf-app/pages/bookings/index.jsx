@@ -117,133 +117,133 @@ function Index() {
 
     return (
         <Layout>
-            <h1>My Bookings</h1>
-            <ScrollArea mah={400} >
-            <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1300}>
-                <Table.Tbody>
-                    <Table.Tr>
-                        <Th
-                        sorted={sortBy === 'date'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('date')}
-                        >
-                        Date
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'bay'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('bay')}
-                        >
-                        Bay
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'hours'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('hours')}
-                        >
-                        # of Hours
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'startTime'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('startTime')}
-                        >
-                        Start Time
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'endTime'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('endTime')}
-                        >
-                        End Time
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'players'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('players')}
-                        >
-                        Player(s)
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'members'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('members')}
-                        >
-                        Member(s)
-                        </Th>
-                        <Th
-                        sorted={sortBy === 'guests'}
-                        reversed={reverseSortDirection}
-                        onSort={() => setSorting('guests')}
-                        >
-                        Guest(s)
-                        </Th>
-                    </Table.Tr>
-                </Table.Tbody>
-                <Table.Tbody>
-                    {sortedData ? (
-                        sortedData.map((event) => (
-                            <Table.Tr key={event.id}>
-                              <Table.Td>
-                                <Text>{event.date}</Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text fz="sm" fw={500}>
-                                  {event.bay}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  {event.hours}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                {event.startTime}
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  {event.endTime}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  {event.players}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  {event.members}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text>
-                                  {event.guests}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Group gap={0} justify="flex-end">
-                                    <button onClick={() => deleteEvent(event.id)} className="btn btn-sm btn-danger btn-delete-user" style={{ width: '60px' }} disabled={event.isDeleting}>
-                                        {event.isDeleting
-                                            ? <span className="spinner-border spinner-border-sm"></span>
-                                            : <span>Delete</span>
-                                        }
-                                    </button>
-                                </Group>
-                              </Table.Td>
-                            </Table.Tr>
-                          ))
-                    ) : (
-                        <Table.Tr>
-                        <Table.Td colSpan='4'>
-                            <Text fw={500} ta="center">
-                            No events found
-                            </Text>
-                        </Table.Td>
-                        </Table.Tr>
-                    )}
-                </Table.Tbody>
-            </Table>
-        </ScrollArea>
+          <h1>My Bookings</h1>
+          <ScrollArea.Autosize mah={400} type='always'>
+          <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1300}>
+              <Table.Tbody>
+                  <Table.Tr>
+                      <Th
+                      sorted={sortBy === 'date'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('date')}
+                      >
+                      Date
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'bay'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('bay')}
+                      >
+                      Bay
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'hours'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('hours')}
+                      >
+                      # of Hours
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'startTime'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('startTime')}
+                      >
+                      Start Time
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'endTime'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('endTime')}
+                      >
+                      End Time
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'players'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('players')}
+                      >
+                      Player(s)
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'members'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('members')}
+                      >
+                      Member(s)
+                      </Th>
+                      <Th
+                      sorted={sortBy === 'guests'}
+                      reversed={reverseSortDirection}
+                      onSort={() => setSorting('guests')}
+                      >
+                      Guest(s)
+                      </Th>
+                  </Table.Tr>
+              </Table.Tbody>
+              <Table.Tbody>
+                  {sortedData ? (
+                      sortedData.map((event) => (
+                          <Table.Tr key={event.id}>
+                            <Table.Td>
+                              <Text>{event.date}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text fz="sm" fw={500}>
+                                {event.bay}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text>
+                                {event.hours}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              {event.startTime}
+                            </Table.Td>
+                            <Table.Td>
+                              <Text>
+                                {event.endTime}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text>
+                                {event.players}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text>
+                                {event.members}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text>
+                                {event.guests}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Group gap={0} justify="flex-end">
+                                  <button onClick={() => deleteEvent(event.id)} className="btn btn-sm btn-danger btn-delete-user" style={{ width: '60px' }} disabled={event.isDeleting}>
+                                      {event.isDeleting
+                                          ? <span className="spinner-border spinner-border-sm"></span>
+                                          : <span>Delete</span>
+                                      }
+                                  </button>
+                              </Group>
+                            </Table.Td>
+                          </Table.Tr>
+                        ))
+                  ) : (
+                      <Table.Tr>
+                      <Table.Td colSpan='4'>
+                          <Text fw={500} ta="center">
+                          No events found
+                          </Text>
+                      </Table.Td>
+                      </Table.Tr>
+                  )}
+              </Table.Tbody>
+          </Table>
+          </ScrollArea.Autosize>
         </Layout>
     );
 }
