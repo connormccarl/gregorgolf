@@ -11,8 +11,14 @@ function Document() {
           <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
           <link rel="icon" href="/favicon.ico" sizes="any" />
           <link
+            rel="icon"
+            href="/icon?<generated>"
+            type="image/<generated>"
+            sizes="<generated>"
+          />
+          <link
             rel="apple-touch-icon"
-            href="/favicon?<generated>"
+            href="/apple-icon?<generated>"
             type="image/<generated>"
             sizes="<generated>"
           />
