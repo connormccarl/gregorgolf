@@ -7,7 +7,7 @@ import * as Yup from 'yup';
 
 import Stripe from 'stripe';
 
-import { SimpleGrid, Center, Image, Container, Title } from '@mantine/core';
+import { SimpleGrid, Center, Image, Container, Title, Stack } from '@mantine/core';
 import { Layout } from 'components/account';
 import { userService, alertService } from 'services';
 import { Alert } from '@/components';
@@ -54,8 +54,10 @@ function Login() {
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <Center className={classes.login}>
                 <Container w="90%">
-                    <Title size="h1">Welcome to Gregor Golf</Title>
-                    <Title size="h4" c="dimmed">Gregor Private Club of Golf, please login below.</Title>
+                    <Center><Title size="h2">WELCOME TO</Title></Center>
+                    <Center><Title size="h1" c="dimmed">The Gregor Club</Title></Center>
+                    <Center><Title size="h5" c="" className='mt-1'>please login below</Title></Center>
+                    
                     <Alert />
                     <br />
                     <form onSubmit={handleSubmit(onSubmit)}>

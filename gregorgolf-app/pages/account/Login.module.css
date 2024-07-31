@@ -3,6 +3,7 @@
     @media (max-width: $mantine-breakpoint-sm){
         order: 2;
         padding-bottom: 30px;
+        min-height: 60vh;
     }
 }
 
@@ -12,6 +13,6 @@
 
     @media (max-width: $mantine-breakpoint-sm){
         order: 1;
-        height: 60vh
+        height: 40vh
     }
 }
