@@ -118,7 +118,7 @@ function Index() {
     return (
         <Layout>
           <h1>My Bookings</h1>
-          <ScrollArea.Autosize mah={400} type='always'>
+          <ScrollArea.Autosize mah="60vh" type='always'>
           <Table horizontalSpacing="xs" verticalSpacing="xs" miw={1300}>
               <Table.Tbody>
                   <Table.Tr>

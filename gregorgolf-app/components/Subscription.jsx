@@ -20,7 +20,7 @@ export default function Subscription() {
           <Group wrap="nowrap" gap={10} mt={3}>
             <IconCurrencyDollar stroke={1.5} size="1rem" className={classes.icon} />
             <Text fz="md" c="dimmed">
-                250.00 /month
+                200.00 /month
             </Text>
           </Group>
         </div>
@@ -36,7 +36,7 @@ export default function Subscription() {
             <Group wrap="nowrap" gap={10} mt={3}>
                 <IconCurrencyDollar stroke={1.5} size="1rem" className={classes.icon} />
                 <Text fz="md" c="dimmed">
-                    2,420.00 /year
+                    2,200.00 /year
                 </Text>
             </Group>
         </div>

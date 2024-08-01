@@ -210,7 +210,7 @@ function Index() {
               Export
           </Button>
 
-          <ScrollArea type='always'>
+          <ScrollArea.Autosize mah="60vh" type='always'>
             <TextInput
                 placeholder="Search by any field"
                 mb="md"
@@ -366,7 +366,7 @@ function Index() {
                     )}
                 </Table.Tbody>
             </Table>
-        </ScrollArea>
+        </ScrollArea.Autosize>
         </Layout>
     );
 }

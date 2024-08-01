@@ -784,8 +784,8 @@ export default function Calendar({ events: data }) {
     };
 
     // checks if the event can be joined
-    const canJoin = (hours, people, firstName) => {
-        if(hours == 1 || people == 4 || firstName === 'Restricted'){
+    const canJoin = (hours, people, firstName, endTime) => {
+        if(hours == 1 || people == 4 || firstName === 'Restricted' || new Date() >= new Date(endTime)){
             return false;
         } else {
             return true;
@@ -802,7 +802,7 @@ export default function Calendar({ events: data }) {
             <div className={`${getBayDisplay('Bay 2', view, 'Schedule')} ${ index == 23 ? classes.bottomGrid : '' }`}></div>
             {events && events.filter(event => new Date(event.effective_start_time).toLocaleTimeString() === timeslot.time.toLocaleTimeString()).map(event => (
                     <div key={event.bay + event.effective_start_time} className={`${classes.event} ${event.bay == 2 && view == 'Both' ? classes.eventBay2 : classes.eventBay1} ${view !== 'Both' && ('Bay ' + event.bay) !== view ? 'd-none' : ''} ${getEventWidth(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].firstName)}`} style={{ height: event.effective_hours * 54 - 4 }}>
-                        { canJoin(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].firstName) && !event.members.some(member => member.id === user.id) ? 
+                        { canJoin(event.hours, event.members.length + event.members.reduce((prev, curr) => prev + curr.guests, 0), event.members[0].firstName, event.effective_end_time) && !event.members.some(member => member.id === user.id) ? 
                             <Button onClick={async () => {
                                 if(await userService.canAddEvent(user.id)){
                                     setJoin(true);
