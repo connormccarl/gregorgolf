@@ -15,8 +15,8 @@ async function billForEvent(customerId, priceId, type, eventId, join, userId) {
     return await fetchWrapper.post(`${baseUrl}/event`, { customerId, priceId, type, eventId, join, userId });
 }
 
-async function billForAccount(yearly, userId, discount) {
-    return await fetchWrapper.post(`${baseUrl}/account`, { yearly, userId, discount });
+async function billForAccount(userId, options) {
+    return await fetchWrapper.post(`${baseUrl}/account`, { userId, options });
 }
 
 async function activateAccount(userId, sessionId){

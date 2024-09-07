@@ -10,22 +10,24 @@ export default apiHandler({
 async function payment(req, res) {
     try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        const { yearly, userId, discount } = await req.body;
-        //console.log("yearly: ", yearly);
+        const { userId, options } = await req.body;
+        //console.log("options: ", options);
 
-        // set the subscription to monthly or yearly
+        // set the subscription to monthly or options.yearly
         let priceId;
-        if(discount){
-            if(discount === '22FOUGRG') {
+        if(options.code){
+            if(options.code === '22FOUGRG') {
                 priceId = 'price_1PhyQJLcjY6vEoOvVHOG1hXF'; // LIVE: price_1PhyQJLcjY6vEoOvVHOG1hXF
-            } else if(discount === '22FAMGRG') {
+            } else if(options.code === '22FAMGRG') {
                 priceId = 'price_1PGOG5LcjY6vEoOvSQklaAJA'; // TEST: price_1PL8oqLcjY6vEoOvS6T6fj27, LIVE: price_1PGOG5LcjY6vEoOvSQklaAJA
             } else {
                 priceId = 'price_1PhyRqLcjY6vEoOvVjcRLjzk'; // TEST: price_1PGOrtLcjY6vEoOvQYGI8nNF, LIVE: price_1PhyRqLcjY6vEoOvVjcRLjzk
             }
         } else {
-            if(yearly){
+            if(options.yearly){
                 priceId = 'price_1PGOHzLcjY6vEoOv3JpVfYmD'; // TEST: price_1PH7RxLcjY6vEoOvq5CcqmSl, LIVE: price_1PGOHzLcjY6vEoOv3JpVfYmD
+            } else if (options.noCommitment) {
+                priceId = 'price_1PiL2SLcjY6vEoOv5OMwAa2o'; // LIVE: price_1PiL2SLcjY6vEoOv5OMwAa2o
             } else {
                 priceId = 'price_1PhyRqLcjY6vEoOvVjcRLjzk'; // TEST: price_1PGOrtLcjY6vEoOvQYGI8nNF, LIVE: price_1PhyRqLcjY6vEoOvVjcRLjzk
             }
@@ -53,8 +55,8 @@ async function payment(req, res) {
         };
 
         // add coupon code
-        if(discount && discount === 'GREGOR12'){
-            checkoutBody.discounts = [{ coupon: 'FbEci34p' }];
+        if(options.code && options.code === 'GREGOR12'){
+            checkoutBody.options.codes = [{ coupon: 'FbEci34p' }];
         }
 
         // if the customer already exists in Stripe use it (for cancelled then readded subscriptions)

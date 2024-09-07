@@ -79,14 +79,14 @@ function Index() {
         const newRow = {};
 
         newRow.id = row.id.toString();
-        newRow.photo = row.photo?.toString();
+        newRow.photo = row.photo?.toString() || '';
         newRow.name = row.firstName + ' ' + row.lastName;
         newRow.email = row.email.toString();
         newRow.membership = row.membership?.toString();
         newRow.accountStatus = row.accountStatus.toString();
         newRow.subscriptionStatus = row.subscriptionStatus.toString();
         newRow.subscriptionDate = row.subscriptionDate ? moment(row.subscriptionDate).calendar() : '';
-        newRow.subscriptionFrequency = row.subscriptionFrequency?.toString();
+        newRow.subscriptionFrequency = row.subscriptionFrequency?.toString() || '';
         newRow.createdAt = moment(row.createdAt).calendar();
 
         return newRow;

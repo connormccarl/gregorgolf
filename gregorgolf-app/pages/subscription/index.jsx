@@ -11,6 +11,7 @@ export default function Index() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [yearly, setYearly]  = useState(false);
+    const [noCommitment, setNoCommitment]  = useState(false);
     const [code, setCode] = useState('');
 
      // Check to see if this is a redirect back from Stripe Checkout
@@ -41,7 +42,7 @@ export default function Index() {
 
         // process payment
         subscriptionService
-            .billForAccount(yearly, userService.userValue.id, code)
+            .billForAccount(userService.userValue.id, { code, yearly, noCommitment })
             .then((x) => {
                 window.location.assign(x);
             })
@@ -59,6 +60,7 @@ export default function Index() {
                 </Button>
                 <TextInput placeholder="Discount Code" style={{ width: 150 }} value={code} onChange={(event) => setCode(event.currentTarget.value)} />
                 <Checkbox size="sm" label="Yearly Subscription (save $200)" checked={yearly} onChange={(event) => setYearly(event.currentTarget.checked)} />
+                <Checkbox size="sm" label="No Commitment ($325 /month)" checked={noCommitment} onChange={(event) => setNoCommitment(event.currentTarget.checked)} />
             </Group>
         </Stack>
     </Layout>
