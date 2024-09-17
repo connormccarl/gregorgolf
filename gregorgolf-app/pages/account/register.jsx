@@ -7,7 +7,6 @@ import * as Yup from 'yup';
 import { Checkbox, Group } from '@mantine/core';
 
 import { Layout } from 'components/account';
-import Subscription from '@/components/Subscription';
 
 import { userService, alertService, emailService } from 'services';
 
