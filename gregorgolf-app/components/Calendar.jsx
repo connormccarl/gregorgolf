@@ -170,7 +170,10 @@ export default function Calendar({ events: data }) {
         eventService.getByDate(new Date(new Date(date).setHours(0,0,0,0)).toISOString(), new Date(new Date(date).setHours(24,0,0,0)).toISOString())
             .then(x => {
                 setEvents(calcEffectiveTimes(x, date));
-            })
+            });
+
+        // booking date will always be equal to calendar view date
+        setBookingDate(date);
     }, [date])
 
     const calcEffectiveTimes = (events, currDate) => {
