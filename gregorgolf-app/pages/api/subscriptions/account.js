@@ -15,6 +15,7 @@ async function payment(req, res) {
 
         // set the subscription to monthly or options.yearly
         let priceId;
+        // special discount code
         if(options.code){
             if(options.code === '22FOUGRG') {
                 priceId = 'price_1PhyQJLcjY6vEoOvVHOG1hXF'; // LIVE: price_1PhyQJLcjY6vEoOvVHOG1hXF
@@ -23,11 +24,15 @@ async function payment(req, res) {
             } else {
                 priceId = 'price_1PhyRqLcjY6vEoOvVjcRLjzk'; // TEST: price_1PGOrtLcjY6vEoOvQYGI8nNF, LIVE: price_1PhyRqLcjY6vEoOvVjcRLjzk
             }
+        // normal processing
         } else {
+            // yearly ($2,200)
             if(options.yearly){
                 priceId = 'price_1PGOHzLcjY6vEoOv3JpVfYmD'; // TEST: price_1PH7RxLcjY6vEoOvq5CcqmSl, LIVE: price_1PGOHzLcjY6vEoOv3JpVfYmD
+            // Month-to-Month ($375)
             } else if (options.noCommitment) {
-                priceId = 'price_1PiL2SLcjY6vEoOv5OMwAa2o'; // LIVE: price_1PiL2SLcjY6vEoOv5OMwAa2o
+                priceId = 'price_1Qo6uRLcjY6vEoOv6BXLfPpE'; // LIVE: price_1Qo6uRLcjY6vEoOv6BXLfPpE
+            // normal ($200)
             } else {
                 priceId = 'price_1PhyRqLcjY6vEoOvVjcRLjzk'; // TEST: price_1PGOrtLcjY6vEoOvQYGI8nNF, LIVE: price_1PhyRqLcjY6vEoOvVjcRLjzk
             }

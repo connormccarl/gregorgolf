@@ -100,10 +100,10 @@ export default function Index() {
                         <Group wrap="nowrap" gap={10} mt={3}>
                             <IconCurrencyDollar stroke={1.5} size="1rem" className={classes.icon} />
                             <Text fz="md" c="dimmed">
-                                325.00 /month
+                                375.00 /month
                             </Text>
                         </Group>
-                        <Checkbox mt={7} size="sm" label="No Commitment ($325 /month)" checked={noCommitment} onChange={(event) => setNoCommitment(event.currentTarget.checked)} />
+                        <Checkbox mt={7} size="sm" label="No Commitment ($375 /month)" checked={noCommitment} onChange={(event) => setNoCommitment(event.currentTarget.checked)} />
                     </div>
                 </Stack>
                 <Group className='mt-3'>
